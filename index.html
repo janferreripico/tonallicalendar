@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tonalli">
+<meta name="theme-color" content="#A3123A">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Tonalli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+  /* direction palettes: oriente rojo, norte negro, poniente blanco, sur azul */
+  --bg-0:#A3123A; --ink-0:#F6E9DA; --soft-0:rgba(246,233,218,.62); --line-0:rgba(246,233,218,.28);
+  --bg-1:#1F1B19; --ink-1:#EADFCB; --soft-1:rgba(234,223,203,.58); --line-1:rgba(234,223,203,.22);
+  --bg-2:#E8E5DD; --ink-2:#2B2420; --soft-2:rgba(43,36,32,.6);   --line-2:rgba(43,36,32,.2);
+  --bg-3:#2A7B95; --ink-3:#F1F4EF; --soft-3:rgba(241,244,239,.66); --line-3:rgba(241,244,239,.3);
+  --display:"Gloock", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --text:"Instrument Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg-0:#56091F; --ink-0:#F1DFCF; --soft-0:rgba(241,223,207,.58); --line-0:rgba(241,223,207,.22);
+    --bg-1:#141110; --ink-1:#E2D6C1; --soft-1:rgba(226,214,193,.55); --line-1:rgba(226,214,193,.18);
+    --bg-2:#4B4741; --ink-2:#F2EEE6; --soft-2:rgba(242,238,230,.6); --line-2:rgba(242,238,230,.22);
+    --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg-0:#56091F; --ink-0:#F1DFCF; --soft-0:rgba(241,223,207,.58); --line-0:rgba(241,223,207,.22);
+  --bg-1:#141110; --ink-1:#E2D6C1; --soft-1:rgba(226,214,193,.55); --line-1:rgba(226,214,193,.18);
+  --bg-2:#4B4741; --ink-2:#F2EEE6; --soft-2:rgba(242,238,230,.6); --line-2:rgba(242,238,230,.22);
+  --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
+  margin:0; height:100%; background:var(--bg); color:var(--ink);
+  font-family:var(--text); -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
+  transition:background-color .5s ease, color .5s ease;
+  overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-user-select:none;
+  overflow:hidden;
+}
+body[data-dir="1"]{--bg:var(--bg-1);--ink:var(--ink-1);--soft:var(--soft-1);--line:var(--line-1)}
+body[data-dir="2"]{--bg:var(--bg-2);--ink:var(--ink-2);--soft:var(--soft-2);--line:var(--line-2)}
+body[data-dir="3"]{--bg:var(--bg-3);--ink:var(--ink-3);--soft:var(--soft-3);--line:var(--line-3)}
+
+/* Every block has a fixed size, so nothing moves when the day changes */
+main{
+  height:100%; width:100%; max-width:480px; margin:0 auto; padding:16px 24px 12px;
+  display:grid; grid-template-rows:44px 1fr 112px 60px; text-align:center;
+}
+.gdate{position:relative; justify-self:center; align-self:center; height:36px; line-height:36px;
+  font-size:15px; color:var(--soft); padding:0 14px; border-radius:18px; white-space:nowrap}
+.gdate input{position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; font-size:16px}
+.gdate:focus-within{outline:2px solid var(--ink)}
+
+.day{align-self:center; display:grid; justify-items:center; row-gap:16px;
+  --gw:max(130px, min(68vw, 300px, calc((100dvh - 430px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)) * .909)))}
+.day .txt{display:grid; justify-items:center; row-gap:6px; transition:opacity .2s ease}
+.day.out .txt{opacity:0}
+.cart{width:var(--gw); aspect-ratio:240/264; display:block; overflow:visible; filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .cart{filter:brightness(.9) drop-shadow(0 6px 14px rgba(0,0,0,.4))} }
+:root[data-theme="dark"] .cart{filter:brightness(.9)}
+/* entrance: the frame draws itself, corners bloom, the figure arrives, the dots are counted */
+.cart .band{stroke-dasharray:1000; stroke-dashoffset:1000; animation:draw .9s cubic-bezier(.6,0,.2,1) forwards}
+.cart .corner{transform-box:fill-box; transform-origin:center; transform:scale(0); animation:pop .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.cart .fig{transform-box:view-box; transform-origin:100px 100px; opacity:0; animation:arrive .8s cubic-bezier(.2,.9,.3,1.15) .15s forwards}
+.cart .dot{transform-box:fill-box; transform-origin:center; transform:scale(0); animation:pop .35s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{transform:scale(1)}}
+@keyframes arrive{from{opacity:0; transform:scale(.7) rotate(-8deg)} to{opacity:1; transform:none}}
+
+.sign{
+  font-family:var(--display); font-weight:400; margin:0; white-space:nowrap;
+  font-size:var(--fs); line-height:1.1; height:1.1em; --fs:clamp(36px, 11.6vw, 64px);
+}
+.reading{font-size:16px; line-height:28px; height:56px; color:var(--soft); margin:0}
+.reading i{font-style:italic}
+
+.glyph .thin{stroke-width:2.2} .glyph .ns{stroke:none}
+.glyph [class*="a-"]{transform-box:view-box;transform-origin:var(--o,100px 100px);animation-duration:var(--t,4s);animation-iteration-count:infinite;animation-timing-function:ease-in-out}
+.a-blink{animation-name:blink;--t:5.5s} @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.a-sway{animation-name:sway} @keyframes sway{0%,100%{transform:rotate(calc(var(--a,4deg)*-1))}50%{transform:rotate(var(--a,4deg))}}
+.a-osc{animation-name:sway;--a:7deg}
+.a-twitch{animation-name:twitch} @keyframes twitch{0%,78%,100%{transform:rotate(0)}82%{transform:rotate(var(--a,-10deg))}86%{transform:rotate(0)}90%{transform:rotate(var(--a,-10deg))}94%{transform:rotate(0)}}
+.a-flick{animation-name:flick} @keyframes flick{0%,64%,100%{transform:scaleX(0)}70%,84%{transform:scaleX(1)}}
+.a-drift{animation-name:drift;animation-timing-function:ease-out} @keyframes drift{0%{transform:translate(0,0) scale(.5);opacity:0}25%{opacity:1}100%{transform:translate(var(--dx,20px),var(--dy,-10px)) scale(1.1);opacity:0}}
+.a-fall{animation-name:fall;animation-timing-function:ease-in} @keyframes fall{0%{transform:translateY(-14px);opacity:0}20%{opacity:1}75%{opacity:1}100%{transform:translateY(22px);opacity:0}}
+.a-flow{stroke-dasharray:14 10;animation-name:flow;animation-timing-function:linear;--t:1.6s} @keyframes flow{to{stroke-dashoffset:-48}}
+.a-bob{animation-name:bob} @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(var(--y,-4px))}}
+.a-pulse{animation-name:pulse;--t:3s} @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.a-chatter{animation-name:chatter;--t:3.5s} @keyframes chatter{0%,70%,100%{transform:rotate(0)}74%,82%{transform:rotate(7deg)}78%,86%{transform:rotate(0)}}
+.a-pant{animation-name:pant} @keyframes pant{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.75)}}
+.a-bloom{animation-name:bloom} @keyframes bloom{0%,100%{transform:scale(.94) rotate(-4deg)}50%{transform:scale(1.04) rotate(4deg)}}
+.a-shine{animation-name:shine;--t:4.5s;transform-origin:100px 100px} @keyframes shine{0%,55%{transform:rotate(35deg) translateX(0)}85%,100%{transform:rotate(35deg) translateX(260px)}}
+.a-breathe{animation-name:breathe} @keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.03)}}
+.a-peck{animation-name:peck} @keyframes peck{0%,60%,100%{transform:rotate(0)}68%{transform:rotate(7deg)}76%{transform:rotate(-2deg)}84%{transform:rotate(0)}}
+/* ---------- controls: iOS-like glass buttons ---------- */
+:root{--sys:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Instrument Sans", system-ui, sans-serif}
+body{--glass:color-mix(in srgb, var(--ink) 13%, transparent); --glass-on:color-mix(in srgb, var(--ink) 24%, transparent)}
+main{grid-template-rows:52px 1fr 104px 64px; grid-template-columns:minmax(0,1fr)}
+.top{display:grid; grid-template-columns:44px minmax(0,1fr) 44px; column-gap:8px; align-items:center}
+.top .gdate{max-width:100%; overflow:hidden; text-overflow:ellipsis; padding:0 8px}
+.gdate{font-family:var(--sys)}
+.round,.pill{
+  -webkit-appearance:none; appearance:none; border:0; margin:0; cursor:pointer; color:var(--ink);
+  background:var(--glass); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  display:inline-grid; place-items:center; -webkit-tap-highlight-color:transparent;
+  transition:transform .18s cubic-bezier(.3,.7,.4,1.4), background-color .2s ease, opacity .2s ease;
+}
+.round{width:44px; height:44px; border-radius:50%; padding:0}
+.pill{height:44px; border-radius:22px; padding:0 22px; font:600 16px/1 var(--sys); letter-spacing:-.01em}
+.round:active,.pill:active{transform:scale(.9); background:var(--glass-on)}
+.round:focus-visible,.pill:focus-visible{outline:2px solid var(--ink); outline-offset:3px}
+.round svg{width:20px; height:20px; display:block}
+.round[aria-expanded="true"]{background:var(--glass-on)}
+nav{display:grid; grid-template-columns:48px 1fr 48px; align-items:center}
+nav .round{width:48px; height:48px}
+nav .pill{justify-self:center; transition:transform .18s cubic-bezier(.3,.7,.4,1.4), opacity .25s ease}
+nav .pill.hide{opacity:0; transform:scale(.8); pointer-events:none}
+
+.ticks{display:flex; gap:5px; height:12px; align-items:center}
+.ticks span{width:9px; height:9px; border-radius:50%; border:1.5px solid var(--line)}
+.ticks span.past{background:var(--line); border-color:transparent}
+.ticks span.now{background:var(--ink); border-color:var(--ink)}
+/* veintena & year: two labelled values over a 20-segment band */
+.month{
+  -webkit-appearance:none; appearance:none; font:inherit; color:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  margin:0; width:100%; border:0; border-top:1px solid var(--line); border-radius:0; background:none; padding:16px 2px 0;
+  display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:16px; row-gap:14px; align-self:start; align-content:start;
+  text-align:left; transition:opacity .15s ease;
+}
+.month:active{opacity:.55}
+.month .col{display:grid; row-gap:3px; min-width:0}
+.month .r{text-align:right}
+.month .cap{font:600 11px/14px var(--sys); letter-spacing:.08em; text-transform:uppercase; color:var(--soft)}
+.month .val{font-size:15px; line-height:24px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--soft)}
+.month .val b{font-family:var(--display); font-weight:400; font-size:21px; color:var(--ink); margin-right:6px}
+.band{grid-column:1 / -1; display:flex; column-gap:3px; height:14px; align-items:center}
+.band span{flex:1 1 0; height:5px; border-radius:2px; background:var(--line); transition:height .3s ease}
+.band span:nth-child(5n):not(:last-child){margin-right:5px}
+.band span.past{background:color-mix(in srgb, var(--ink) 45%, transparent)}
+.band span.now{height:14px; background:var(--ink)}
+.month:focus-visible{outline:2px solid var(--ink); outline-offset:3px}
+.month p{margin:0; font-size:16px; line-height:22px; white-space:nowrap}
+.month b{font-weight:600}
+.month .ticks{justify-content:flex-start; gap:4px} .month .ticks span{width:8px; height:8px}
+.month .year{font-size:14px; line-height:20px; color:var(--soft)}
+.month .chev{grid-column:2; grid-row:1 / 4; align-self:center; width:20px; height:20px; opacity:.6}
+
+/* ---------- iOS menu ---------- */
+.menu-layer{position:fixed; inset:0; z-index:20}
+.menu-layer[hidden]{display:none}
+.menu{
+  position:fixed; width:min(270px, calc(100vw - 32px)); border-radius:14px; overflow:hidden;
+  background:rgba(242,242,247,.8); color:#000; font-family:var(--sys);
+  -webkit-backdrop-filter:blur(30px) saturate(1.8); backdrop-filter:blur(30px) saturate(1.8);
+  box-shadow:0 12px 40px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.08);
+  transform:scale(.25); opacity:0; transition:transform .32s cubic-bezier(.25,1.25,.4,1), opacity .18s ease;
+}
+.menu.open{transform:scale(1); opacity:1}
+.menu button{
+  -webkit-appearance:none; appearance:none; border:0; background:none; color:inherit; font:inherit; cursor:pointer; width:100%;
+  display:grid; grid-template-columns:22px 1fr 24px; align-items:center; column-gap:8px; padding:11px 16px 11px 12px; text-align:left;
+  -webkit-tap-highlight-color:transparent;
+}
+.menu button:active{background:rgba(0,0,0,.08)} .menu button:focus-visible{outline:2px solid #0a84ff; outline-offset:-2px}
+.menu .ck{width:16px; height:16px; visibility:hidden} .menu [aria-checked="true"] .ck{visibility:visible}
+.menu b{display:block; font-weight:400; font-size:17px; line-height:22px; letter-spacing:-.02em}
+.menu small{display:block; font-size:13px; line-height:18px; color:rgba(60,60,67,.6)}
+.menu .ico{width:22px; height:22px}
+.menu hr{margin:0 0 0 42px; border:0; border-top:.5px solid rgba(60,60,67,.29)}
+.menu .title{font-size:13px; line-height:18px; color:rgba(60,60,67,.6); padding:10px 16px 8px; text-align:center; border-bottom:.5px solid rgba(60,60,67,.29)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .menu{background:rgba(37,37,40,.8); color:#fff; box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 0 .5px rgba(255,255,255,.08)}
+  :root:not([data-theme="light"]) .menu small,:root:not([data-theme="light"]) .menu .title{color:rgba(235,235,245,.6)}
+  :root:not([data-theme="light"]) .menu hr,:root:not([data-theme="light"]) .menu .title{border-color:rgba(84,84,88,.6)}
+  :root:not([data-theme="light"]) .menu button:active{background:rgba(255,255,255,.1)}
+}
+
+/* ---------- iOS sheet with the calendar ---------- */
+.dim{position:fixed; inset:0; z-index:5; background:rgba(0,0,0,.4); opacity:0; transition:opacity .35s ease}
+.dim.open{opacity:1} .dim[hidden]{display:none}
+.sheet{
+  position:fixed; z-index:6; left:0; right:0; bottom:0; margin:0 auto; max-width:520px;
+  top:calc(env(safe-area-inset-top,0px) + 10px);
+  background:var(--bg); color:var(--ink); border-radius:14px 14px 0 0; box-shadow:0 -4px 30px rgba(0,0,0,.25);
+  padding:8px 16px 0;
+  display:grid; grid-template-rows:12px 52px auto minmax(0,1fr);
+  transform:translateY(105%); transition:transform .42s cubic-bezier(.2,.9,.25,1);
+}
+.sheet.open{transform:none} .sheet:focus{outline:none} .sheet[hidden]{display:none} .sheet.drag{transition:none}
+.grab{justify-self:center; width:36px; height:5px; border-radius:3px; background:var(--line); margin-top:2px}
+.sbar{display:grid; grid-template-columns:44px 1fr 44px; align-items:center; text-align:center; touch-action:none}
+.sbar span{font:600 17px/22px var(--sys); letter-spacing:-.02em}
+.wk{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; font:600 12px/24px var(--sys); color:var(--soft); text-align:center; text-transform:uppercase}
+.wk[hidden]{display:none}
+.scroller{position:relative; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; margin:0 -16px; padding:0 16px calc(env(safe-area-inset-bottom,0px) + 92px)}
+.period{padding:18px 0 10px}
+.period h3{margin:0; font-family:var(--display); font-weight:400; font-size:24px; line-height:30px}
+.period h3 span{color:var(--soft)}
+.period.now h3{text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px}
+.period p{margin:0 0 10px; font-size:14px; line-height:20px; color:var(--soft)}
+.sheet[data-view="m"] .period h3{font-size:22px}
+.wk{border-bottom:1px solid var(--line); padding-bottom:4px}
+.grid{display:grid; gap:6px; align-content:start; padding:4px 3px 6px}
+.grid.v{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid.m{grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px}
+.cell{-webkit-appearance:none; appearance:none; border:0; margin:0; font:inherit; cursor:pointer; position:relative;
+  background:#F1E7D0; color:#2a1d17; border-radius:10px; padding:4px 2px 6px; display:grid; justify-items:center; -webkit-tap-highlight-color:transparent;
+  transition:transform .15s ease}
+.cell:active{transform:scale(.94)}
+.cell svg{width:100%; aspect-ratio:1; display:block}
+.grid.v .cell{grid-template-rows:auto 18px 16px}
+.grid.v .cell svg{max-width:64px}
+.cell .n{font-size:12px; line-height:18px; font-weight:500; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.01em}
+.cell .g{font-size:11px; line-height:16px; opacity:.65}
+.cell .num{position:absolute; top:4px; left:6px; font-size:12px; font-weight:500; line-height:16px}
+.grid.m .cell{grid-template-rows:20px auto; padding:3px 2px 4px; border-radius:9px}
+.grid.m .cell .d{font:600 15px/20px var(--sys)}
+.grid.m .cell .mx{position:absolute; bottom:2px; right:4px; font-size:10px; line-height:12px; font-weight:600; opacity:.7}
+.grid.m .blank{visibility:hidden}
+.cell.today{box-shadow:0 0 0 3px var(--ink)}
+.cell.sel{box-shadow:0 0 0 2.5px var(--bg), 0 0 0 5px var(--ink)}
+.cell.today.sel{box-shadow:0 0 0 3px var(--ink)}
+/* floating "Avui" over the scroll, frosted */
+.sfoot{position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom,0px) + 16px); display:grid; place-items:center; pointer-events:none}
+.sfoot .pill{
+  pointer-events:auto; height:48px; padding:0 26px; border-radius:24px; color:var(--ink);
+  background:color-mix(in srgb, var(--bg) 62%, transparent);
+  -webkit-backdrop-filter:blur(22px) saturate(1.7); backdrop-filter:blur(22px) saturate(1.7);
+  box-shadow:0 0 0 .5px var(--line), 0 8px 28px rgba(0,0,0,.22);
+  display:inline-flex; align-items:center; gap:8px;
+}
+.sfoot .pill svg{width:18px; height:18px}
+.sfoot .pill:active{transform:scale(.94)}
+@keyframes flash{0%,100%{box-shadow:0 0 0 3px var(--ink)} 25%,75%{box-shadow:0 0 0 7px var(--ink)} 50%{box-shadow:0 0 0 3px var(--ink)}}
+.cell.flash{animation:flash .9s ease 1}
+.still [class*="a-"]{animation:none !important}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .cell{filter:brightness(.9)} }
+@media (max-height:700px){ .grid.v .cell svg{max-width:48px} .grid.v .cell .g{display:none} .grid.v .cell{grid-template-rows:auto 18px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} .cart .band{stroke-dashoffset:0} .cart .corner,.cart .dot{transform:none} .cart .fig{opacity:1} }
+</style>
+</head>
+<body data-dir="0">
+<main>
+  <header class="top">
+    <span></span>
+    <label class="gdate"><span id="gdate"></span><input id="picker" type="date" aria-label="Tria una data"></label>
+    <button class="round" id="calBtn" aria-label="Obre el calendari"><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2zM4.5 10h15M8.5 3.5v3.5M15.5 3.5v3.5M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </header>
+
+  <section class="day" id="day" aria-live="polite">
+    <svg class="cart" id="cart" viewBox="0 0 240 264" role="img"></svg>
+    <div class="txt">
+      <h1 class="sign" id="sign"></h1>
+      <p class="reading" id="reading"></p>
+    </div>
+  </section>
+
+  <button class="month" id="monthBtn">
+    <span class="col"><span class="cap" id="monthCap">Veintena</span><span class="val" id="month"></span></span>
+    <span class="col r"><span class="cap">Any</span><span class="val" id="year"></span></span>
+    <span class="band" id="ticks" aria-hidden="true"></span>
+  </button>
+
+  <nav>
+    <button class="round" id="prev" aria-label="Dia anterior"><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="pill hide" id="today">Avui</button>
+    <button class="round" id="next" aria-label="Dia següent"><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </nav>
+</main>
+
+<div class="dim" id="dim" hidden></div>
+<div class="sheet" id="sheet" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="pTitle" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sbar" id="sbar">
+    <button class="round" id="viewBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Canvia la vista"></button>
+    <span id="sbarTitle"></span>
+    <button class="round" id="closeBtn" aria-label="Tanca"><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  <div class="wk" id="wk" aria-hidden="true"><span>dl</span><span>dt</span><span>dc</span><span>dj</span><span>dv</span><span>ds</span><span>dg</span></div>
+  <div class="scroller" id="scroller"></div>
+  <div class="sfoot"><button class="pill" id="pToday" aria-label="Ves a avui">Avui</button></div>
+</div>
+
+<div class="menu-layer" id="menuLayer" hidden>
+  <div class="menu" id="menu" role="menu" aria-label="Vista del calendari">
+    <div class="title">Mostra el calendari</div>
+    <button role="menuitemradio" data-view="v" aria-checked="false"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Veintena</b><small>Mes mexica de 20 dies</small></span><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><circle cx="5.0" cy="4" r="1.55" fill="currentColor"/><circle cx="9.67" cy="4" r="1.55" fill="currentColor"/><circle cx="14.34" cy="4" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="4" r="1.55" fill="currentColor"/><circle cx="5.0" cy="8" r="1.55" fill="currentColor"/><circle cx="9.67" cy="8" r="1.55" fill="currentColor"/><circle cx="14.34" cy="8" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="8" r="1.55" fill="currentColor"/><circle cx="5.0" cy="12" r="1.55" fill="currentColor"/><circle cx="9.67" cy="12" r="1.55" fill="currentColor"/><circle cx="14.34" cy="12" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="12" r="1.55" fill="currentColor"/><circle cx="5.0" cy="16" r="1.55" fill="currentColor"/><circle cx="9.67" cy="16" r="1.55" fill="currentColor"/><circle cx="14.34" cy="16" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="16" r="1.55" fill="currentColor"/><circle cx="5.0" cy="20" r="1.55" fill="currentColor"/><circle cx="9.67" cy="20" r="1.55" fill="currentColor"/><circle cx="14.34" cy="20" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="20" r="1.55" fill="currentColor"/></svg></button>
+    <hr>
+    <button role="menuitemradio" data-view="m" aria-checked="false"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Mes gregorià</b><small>Amb el signe de cada dia</small></span><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2zM4.5 10h15M8.5 3.5v3.5M15.5 3.5v3.5M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+</div>
+
+<script>
+// ===== MexCal engine (shared by web app and widget) =====
+const SIGNS = [
+  ["Cipactli","cocodril"],["Ehécatl","vent"],["Calli","casa"],["Cuetzpalin","sargantana"],
+  ["Cóatl","serp"],["Miquiztli","mort"],["Mázatl","cérvol"],["Tochtli","conill"],
+  ["Atl","aigua"],["Itzcuintli","gos"],["Ozomatli","mona"],["Malinalli","herba"],
+  ["Ácatl","canya"],["Océlotl","jaguar"],["Cuauhtli","àguila"],["Cozcacuauhtli","voltor"],
+  ["Ollin","moviment"],["Técpatl","sílex"],["Quiáhuitl","pluja"],["Xóchitl","flor"]];
+const NUMS = ["Ce","Ome","Yei","Nahui","Macuilli","Chicuace","Chicome","Chicuei","Chiconahui",
+  "Matlactli","Matlactlionce","Matlactliomome","Matlactliomei"];
+const VEINTENAS = ["Atlcahualo","Tlacaxipehualiztli","Tozoztontli","Huey Tozoztli","Tóxcatl",
+  "Etzalcualiztli","Tecuilhuitontli","Huey Tecuílhuitl","Tlaxochimaco","Xocotlhuetzi",
+  "Ochpaniztli","Teotleco","Tepeílhuitl","Quecholli","Panquetzaliztli","Atemoztli","Títitl","Izcalli"];
+const DIRS = ["orient","nord","ponent","sud"];
+const BEARERS = ["Ácatl","Técpatl","Calli","Tochtli"];
+// Anchor of the 260-day count. This one reproduces your 2023 table (12 Mar 2023 = 13 Cipactli).
+// The Caso correlation (most cited by scholars) would be: { y:2023, m:3, d:12, num:6, sign:12 }.
+const ANCHOR = { y:2023, m:3, d:12, num:13, sign:0 };
+const NEW_YEAR = { m:3, d:12 };            // contemporary Mexica new year
+const dayNum = (y,m,d) => Math.floor(Date.UTC(y,m-1,d)/864e5);
+const mod = (a,n) => ((a%n)+n)%n;
+
+function mexica(date){
+  const y=date.getFullYear(), m=date.getMonth()+1, d=date.getDate();
+  const t = dayNum(y,m,d) - dayNum(ANCHOR.y,ANCHOR.m,ANCHOR.d);
+  const num = mod(ANCHOR.num-1+t,13)+1, sign = mod(ANCHOR.sign+t,20);
+  let sy = (m>NEW_YEAR.m || (m===NEW_YEAR.m && d>=NEW_YEAR.d)) ? y : y-1;
+  const doy = dayNum(y,m,d) - dayNum(sy,NEW_YEAR.m,NEW_YEAR.d);
+  const yearLen = dayNum(sy+1,NEW_YEAR.m,NEW_YEAR.d) - dayNum(sy,NEW_YEAR.m,NEW_YEAR.d);
+  const nem = doy>=360;
+  const k = sy-2023; // 2023 = 11 Ácatl
+  return {
+    num, numName:NUMS[num-1], sign, signName:SIGNS[sign][0], gloss:SIGNS[sign][1],
+    dir:sign%4, dirName:DIRS[sign%4],
+    month: nem ? "Nemontemi" : VEINTENAS[Math.floor(doy/20)], monthIdx: nem?18:Math.floor(doy/20),
+    monthDay: nem ? doy-359 : doy%20+1, monthLen: nem ? yearLen-360 : 20,
+    year: `${mod(10+k,13)+1} ${BEARERS[mod(k,4)]}`, trecenaDay:num
+  };
+}
+
+
+// ===== 20 day-sign glyphs, drawn after the conventions of the Central Mexican codices =====
+// Each draws in a 200×200 box. Classes: .a* = idle animation (see CSS).
+const K="#2a1d17", RED="#B8322A", OCH="#D9A12B", TUR="#3E9C9A", BLU="#2F7FA8", WHT="#F8F2E4",
+      GRN="#6F9A3E", PNK="#E59C82", BRN="#A8683E", DRK="#3b2f2a";
+const eye=(x,y,r=9,o="")=>`<g class="a-blink" style="--o:${x}px ${y}px${o}"><circle cx="${x}" cy="${y}" r="${r}" fill="${WHT}"/><circle cx="${x+r*.25}" cy="${y}" r="${r*.45}" fill="${K}" class="ns"/></g>`;
+const spiral=(x,y,s=1,c=K)=>`<path d="M${x},${y} c${8*s},0 ${12*s},${-8*s} ${6*s},${-13*s} c${-6*s},${-5*s} ${-16*s},${-2*s} ${-16*s},${8*s} c0,${12*s} ${16*s},${20*s} ${30*s},${12*s}" fill="none" stroke="${c}" stroke-width="5"/>`;
+const teeth=(x0,x1,y,h=12,w=9)=>{let s="";for(let x=x0;x<x1;x+=w)s+=`<path d="M${x},${y} L${x+w/2},${y+h} L${x+w},${y}Z" fill="${WHT}" class="thin"/>`;return s;};
+const collar=(y,c=OCH)=>`<path d="M48,${y} C70,${y+14} 120,${y+16} 150,${y+4} L154,${y+18} C120,${y+32} 70,${y+30} 44,${y+16}Z" fill="${c}"/>`+
+  [62,80,98,116,134].map((x,i)=>`<circle cx="${x}" cy="${y+12+(i==0||i==4?-1:2)}" r="4" fill="${WHT}" class="thin"/>`).join("");
+
+const GLYPHS = [
+// 0 Cipactli — caiman head, no lower jaw, crest of spines
+()=>`<g class="a-sway" style="--o:40px 120px;--a:2.5deg;--t:5s">
+  ${[44,58,72,86,100,114].map((x,i)=>`<path d="M${x},${64-(i<3?i*2:6-i)} L${x+7},${38+Math.abs(i-2)*4} L${x+14},${62-(i<3?i*2:6-i)}Z" fill="${RED}"/>`).join("")}
+  <path d="M28,122 C24,84 52,58 92,58 L152,66 C174,68 186,80 180,93 C176,101 164,103 152,101 L62,110 C48,114 40,128 28,122Z" fill="${GRN}"/>
+  <path d="M60,84 C90,80 130,82 170,86" fill="none" class="thin"/>
+  ${[0,1,2,3,4,5,6].map(i=>`<circle cx="${70+i*14}" cy="${74+i*.5}" r="3" fill="${OCH}" class="thin"/>`).join("")}
+  <path d="M176,72 C188,60 196,74 186,80" fill="none" stroke-width="5"/>
+  ${teeth(64,152,104,14,11)}
+  <path d="M74,116 C78,146 112,150 124,124" fill="${RED}"/>
+  <path d="M86,122 C92,136 108,136 114,124" fill="none" class="thin"/>
+  <circle cx="48" cy="98" r="11" fill="${OCH}"/><circle cx="48" cy="98" r="4" fill="${K}" class="ns"/>
+  <path d="M74,70 C82,60 104,62 108,72" fill="${RED}"/>
+  ${eye(92,78,10)}
+</g>`,
+// 1 Ehécatl — wind god head with red beak mask, conical hat, wind volutes
+()=>`${[0,1,2].map(i=>`<g class="a-drift" style="--dx:26px;--dy:${-14+i*14}px;--t:3.6s;animation-delay:${-i*1.2}s">${spiral(150,70+i*36,.9,TUR)}</g>`).join("")}
+<g class="a-sway" style="--o:80px 150px;--a:2deg;--t:6s">
+  <path d="M56,64 L88,8 L122,70Z" fill="${WHT}"/>
+  ${[[82,34],[92,24],[96,46],[106,56],[78,54]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${K}" class="ns"/>`).join("")}
+  <path d="M50,66 C62,56 112,58 128,72" fill="none" stroke-width="7" stroke="${RED}"/>
+  <path d="M68,66 C108,58 132,84 128,108 L124,132 C114,148 82,152 66,142 C48,126 44,82 68,66Z" fill="${DRK}"/>
+  <path d="M98,80 C116,78 128,92 126,104 L104,104Z" fill="${OCH}" class="thin"/>
+  <path d="M118,104 C140,92 172,98 182,112 C172,124 142,128 116,124Z" fill="${RED}"/>
+  <path d="M122,114 C140,112 160,112 178,113" fill="none" class="thin"/>
+  <circle cx="70" cy="108" r="12" fill="${WHT}"/><path d="M70,120 C72,132 62,140 56,134" fill="none" stroke="${WHT}" stroke-width="5"/>
+  <circle cx="70" cy="108" r="4" fill="${K}" class="ns"/>
+  ${eye(110,92,8)}
+</g>`,
+// 2 Calli — temple house on a platform, smoke rising
+()=>`${[0,1].map(i=>`<g class="a-drift" style="--dx:${i?10:-8}px;--dy:-26px;--t:4s;animation-delay:${-i*2}s">${spiral(96+i*10,40,.7,"#8c7f75")}</g>`).join("")}
+<rect x="34" y="150" width="132" height="22" fill="${OCH}"/>
+<path d="M34,161 L166,161" class="thin"/>
+${[48,70,92,114,136].map(x=>`<rect x="${x}" y="154" width="14" height="5" fill="${RED}" class="thin"/>`).join("")}
+<rect x="52" y="98" width="96" height="52" fill="${WHT}"/>
+<rect x="84" y="114" width="32" height="36" fill="${K}"/>
+<path d="M84,114 L100,104 L116,114" fill="${OCH}" class="thin"/>
+<rect x="52" y="98" width="96" height="9" fill="${TUR}"/>
+<path d="M42,98 L158,98 L142,58 L58,58Z" fill="${RED}"/>
+${[66,82,100,118,134].map(x=>`<circle cx="${x}" cy="78" r="5" fill="${WHT}" class="thin"/>`).join("")}
+<path d="M58,58 L142,58" class="thin"/>
+${[62,80,98,116,134].map(x=>`<path d="M${x},58 L${x},50 L${x+4},46 L${x+8},50 L${x+8},58Z" fill="${WHT}" class="thin"/>`).join("")}`,
+// 3 Cuetzpalin — lizard seen from above, curling tail
+()=>`<g class="a-sway" style="--o:100px 132px;--a:7deg;--t:3.4s">
+  <path d="M96,132 C92,172 128,190 152,170 C168,156 156,136 140,146" fill="none" stroke="${K}" stroke-width="18"/>
+  <path d="M96,132 C92,172 128,190 152,170 C168,156 156,136 140,146" fill="none" stroke="${TUR}" stroke-width="10"/>
+  <path d="M100,150 C102,170 126,180 146,168" fill="none" stroke="${OCH}" stroke-width="3" stroke-dasharray="4 8"/>
+</g>
+<g class="a-sway" style="--o:100px 90px;--a:2deg;--t:3.4s">
+  ${[[86,72,-1,-1],[114,72,1,-1],[88,118,-1,1],[112,118,1,1]].map(([x,y,sx,sy],i)=>`<g class="a-sway" style="--o:${x}px ${y}px;--a:${6*sx}deg;--t:3.4s;animation-delay:${-i*.4}s">
+    <path d="M${x},${y} L${x+sx*28},${y+sy*-6} L${x+sx*36},${y+sy*14}" fill="none" stroke="${K}" stroke-width="11"/>
+    <path d="M${x},${y} L${x+sx*28},${y+sy*-6} L${x+sx*36},${y+sy*14}" fill="none" stroke="${GRN}" stroke-width="5"/>
+    ${[-8,0,8].map(d=>`<path d="M${x+sx*36},${y+sy*14} l${sx*6+d*.4},${sy*8+d*.2}" stroke-width="3"/>`).join("")}</g>`).join("")}
+  <path d="M100,26 C116,26 122,46 115,60 C126,80 126,110 113,136 L87,136 C74,110 74,80 85,60 C78,46 84,26 100,26Z" fill="${GRN}"/>
+  <path d="M86,60 C95,64 105,64 114,60" fill="none" class="thin"/>
+  ${[74,90,106,122].map((y,i)=>`<path d="M${100-6+i},${y} L100,${y-7} L${106-i},${y} L100,${y+7}Z" fill="${OCH}" class="thin"/>`).join("")}
+  <circle cx="92" cy="40" r="4.5" fill="${WHT}" class="thin"/><circle cx="108" cy="40" r="4.5" fill="${WHT}" class="thin"/>
+  <circle cx="92" cy="40" r="2" fill="${K}" class="ns"/><circle cx="108" cy="40" r="2" fill="${K}" class="ns"/>
+</g>`,
+// 4 Cóatl — coiled serpent, banded, forked tongue
+()=>`<g class="a-sway" style="--o:100px 170px;--a:3deg;--t:4.2s">
+  <path id="cb" d="M44,168 C14,132 62,100 100,122 C140,144 176,112 154,80 C140,60 116,62 108,74" fill="none" stroke="${K}" stroke-width="28"/>
+  <path d="M44,168 C14,132 62,100 100,122 C140,144 176,112 154,80 C140,60 116,62 108,74" fill="none" stroke="${OCH}" stroke-width="19"/>
+  <path d="M44,168 C14,132 62,100 100,122 C140,144 176,112 154,80 C140,60 116,62 108,74" fill="none" stroke="${RED}" stroke-width="19" stroke-dasharray="9 15"/>
+  <path d="M44,168 C14,132 62,100 100,122 C140,144 176,112 154,80 C140,60 116,62 108,74" fill="none" stroke="${WHT}" stroke-width="3" stroke-dasharray="2 22" stroke-dashoffset="-11"/>
+  ${[0,1,2].map(i=>`<ellipse cx="${46-i*4}" cy="${172+i*7}" rx="9" ry="4" fill="${WHT}" class="thin"/>`).join("")}
+  <g class="a-flick" style="--o:70px 60px;--t:2.6s"><path d="M70,60 L44,52 L34,44 M44,52 L34,58" fill="none" stroke="${RED}" stroke-width="4.5"/></g>
+  <path d="M122,66 C116,44 88,38 72,50 C64,58 70,72 88,76 C104,80 122,78 122,66Z" fill="${OCH}"/>
+  <path d="M72,58 C86,62 104,64 120,62" fill="none" class="thin"/>
+  <path d="M86,40 C92,30 108,32 112,42" fill="${RED}" class="thin"/>
+  ${eye(96,52,7)}
+  <circle cx="76" cy="54" r="1.8" fill="${K}" class="ns"/>
+</g>`,
+// 5 Miquiztli — skull seen from the front, star eyes, curly hair, chattering jaw
+()=>`${[[62,40,-1],[100,26,1],[138,40,1]].map(([x,y,s])=>`<path d="M${x},${y+14} C${x-10*s},${y} ${x+2*s},${y-12} ${x+10*s},${y-4} C${x+14*s},${y+2} ${x+6*s},${y+8} ${x+2*s},${y+3}" fill="none" stroke-width="7"/>`).join("")}
+<path d="M48,96 C44,52 72,32 100,32 C128,32 156,52 152,96 C150,112 142,120 136,124 L134,142 L66,142 L64,124 C58,120 50,112 48,96Z" fill="${WHT}"/>
+<path d="M100,34 C96,48 104,56 100,66 M70,52 C78,58 76,66 82,70" fill="none" class="thin"/>
+<path d="M58,108 C62,118 70,122 78,120 M142,108 C138,118 130,122 122,120" fill="none" class="thin"/>
+${[[78,90],[122,90]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="18" fill="${K}"/><g class="a-pulse" style="--o:${x}px ${y}px;animation-delay:${-i*1.5}s"><path d="M${x},${y-11} L${x+3},${y-3} L${x+11},${y} L${x+3},${y+3} L${x},${y+11} L${x-3},${y+3} L${x-11},${y} L${x-3},${y-3}Z" fill="${OCH}" class="ns"/><circle cx="${x}" cy="${y}" r="4" fill="${WHT}" class="ns"/></g>`).join("")}
+<path d="M100,104 C108,110 108,120 100,124 C92,120 92,110 100,104Z" fill="${K}"/>
+${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${70+i*7.5}" y="124" width="7.5" height="16" rx="1.5" fill="${WHT}" class="thin"/>`).join("")}
+<g class="a-chatter" style="--o:70px 142px">
+  <path d="M66,142 L134,142 L130,160 C118,172 82,172 70,160Z" fill="${WHT}"/>
+  ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${70+i*7.5}" y="142" width="7.5" height="11" rx="1.5" fill="${WHT}" class="thin"/>`).join("")}
+</g>
+${[44,156].map(x=>`<circle cx="${x}" cy="104" r="10" fill="${RED}"/><circle cx="${x}" cy="104" r="4" fill="${WHT}" class="thin"/><path d="M${x},114 L${x-4},130 L${x+4},130Z" fill="${OCH}" class="thin"/>`).join("")}`,
+// 6 Mázatl — deer with a long raised neck and wide antlers
+()=>`<g transform="translate(9 14) scale(.9)"><g class="a-sway" style="--o:100px 190px;--a:3deg;--t:5.5s">
+  <path d="M70,192 C78,152 86,122 94,98 L128,100 C122,130 120,162 126,192Z" fill="${BRN}"/>
+  <path d="M100,108 C98,134 100,162 104,190" fill="none" stroke="${WHT}" stroke-width="7" opacity=".85"/>
+  ${[[86,150],[114,128],[90,176]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${WHT}" class="thin"/>`).join("")}
+  <g class="a-sway" style="--o:110px 96px;--a:4deg;--t:3.7s">
+    <path d="M108,70 C100,46 84,32 62,26 M92,44 C92,34 90,26 84,16 M78,34 C74,26 72,20 70,10 M114,68 C118,42 132,28 152,20 M126,42 C128,32 126,24 122,14 M140,28 C144,22 146,16 146,6" fill="none" stroke="${K}" stroke-width="10"/>
+    <path d="M108,70 C100,46 84,32 62,26 M92,44 C92,34 90,26 84,16 M78,34 C74,26 72,20 70,10 M114,68 C118,42 132,28 152,20 M126,42 C128,32 126,24 122,14 M140,28 C144,22 146,16 146,6" fill="none" stroke="${WHT}" stroke-width="4"/>
+    <g class="a-twitch" style="--o:102px 76px;--a:-14deg;--t:4.4s">
+      <path d="M100,80 C78,72 68,58 70,46 C88,48 102,60 108,74Z" fill="${BRN}"/>
+      <path d="M98,74 C86,68 80,60 80,54 C90,56 98,62 102,70Z" fill="${PNK}" class="ns"/>
+    </g>
+    <path d="M92,98 C86,80 98,66 118,66 L160,56 C172,54 182,60 178,70 C174,78 162,80 152,82 L130,102Z" fill="${BRN}"/>
+    <ellipse cx="177" cy="64" rx="6" ry="5" fill="${K}" class="ns"/>
+    <path d="M152,82 C158,78 166,76 172,74" fill="none" class="thin"/>
+    <path d="M112,76 C120,70 132,70 138,74" fill="none" stroke-width="3"/>
+    ${eye(124,80,7)}
+    <path d="M118,88 C124,94 134,94 140,90" fill="none" stroke="${WHT}" stroke-width="3"/>
+  </g>
+</g></g>`,
+// 7 Tochtli — crouching rabbit, whole body
+()=>`<g class="a-breathe" style="--o:96px 170px;--t:2.6s">
+  <circle cx="40" cy="128" r="11" fill="${WHT}"/>
+  <path d="M40,150 C34,112 66,92 104,96 C132,98 150,116 150,140 C150,160 132,170 110,170 L56,170 C44,168 40,160 40,150Z" fill="${WHT}"/>
+  <path d="M58,152 C62,126 92,120 106,142" fill="none" class="thin"/>
+  <path d="M74,108 C86,104 100,106 108,112 C98,118 84,118 74,108Z" fill="${BRN}" opacity=".45" class="ns"/>
+  <path d="M60,170 L106,170 C116,170 116,180 106,182 L58,182Z" fill="${WHT}"/>
+  <path d="M132,166 C140,164 150,166 152,172 C148,178 136,178 130,174Z" fill="${WHT}"/>
+</g>
+<g class="a-sway" style="--o:140px 116px;--a:3deg;--t:4s">
+  <g class="a-twitch" style="--o:140px 78px;--a:-10deg;--t:3.6s">
+    <path d="M136,80 C120,52 116,26 124,14 C140,28 148,56 146,78Z" fill="${WHT}"/>
+    <path d="M136,70 C128,52 126,36 128,28 C136,40 140,56 140,70Z" fill="${PNK}" class="ns"/>
+  </g>
+  <g class="a-twitch" style="--o:150px 78px;--a:9deg;--t:3.6s;animation-delay:-.3s">
+    <path d="M146,76 C148,48 158,24 170,18 C176,40 164,64 154,80Z" fill="${WHT}"/>
+    <path d="M152,68 C154,48 160,34 166,30 C168,44 162,58 156,68Z" fill="${PNK}" class="ns"/>
+  </g>
+  <path d="M126,112 C118,86 134,70 152,72 C172,74 184,90 178,104 C174,116 158,120 140,118Z" fill="${WHT}"/>
+  ${eye(158,90,7)}
+  <g class="a-twitch" style="--o:178px 99px;--a:12deg;--t:1.5s"><ellipse cx="178" cy="99" rx="4.5" ry="4" fill="${PNK}"/></g>
+  <path d="M172,106 L194,102 M172,110 L194,112" class="thin"/>
+</g>`,
+// 8 Atl — water stream with shells, beads and drops
+()=>`<path d="M30,86 C66,58 134,58 170,86 L170,122 C134,146 66,146 30,122Z" fill="${BLU}"/>
+<path d="M38,100 C70,80 130,80 162,100" fill="none" stroke="${WHT}" stroke-width="4" class="a-flow"/>
+<path d="M38,114 C70,130 130,130 162,114" fill="none" stroke="${TUR}" stroke-width="4" class="a-flow" style="animation-direction:reverse"/>
+${[60,84,108,132].map((x,i)=>`<circle cx="${x+6}" cy="${107-(i==0||i==3?0:2)}" r="5" fill="${WHT}" class="thin"/>`).join("")}
+${[44,80,116,152].map((x,i)=>`<g class="a-sway" style="--o:${x}px 66px;--a:8deg;--t:3s;animation-delay:${-i*.5}s"><path d="M${x-10},70 C${x-14},50 ${x+10},44 ${x+10},58 C${x+10},66 ${x},66 ${x},60" fill="${BLU}"/></g>`).join("")}
+${[[50,150],[86,158],[114,158],[150,150]].map(([x,y],i)=>`<g class="a-bob" style="--t:2.4s;animation-delay:${-i*.6}s"><path d="M${x},${y-16} C${x+10},${y-2} ${x+9},${y+8} ${x},${y+8} C${x-9},${y+8} ${x-10},${y-2} ${x},${y-16}Z" fill="${BLU}"/><circle cx="${x}" cy="${y+1}" r="3" fill="${WHT}" class="ns"/></g>`).join("")}
+${[[30,104,-1],[170,104,1]].map(([x,y,s])=>`<g><path d="M${x},${y-16} C${x+s*24},${y-20} ${x+s*30},${y+10} ${x+s*8},${y+18} Z" fill="${WHT}"/><path d="M${x+s*6},${y-6} C${x+s*16},${y-6} ${x+s*16},${y+6} ${x+s*8},${y+6}" fill="none" class="thin"/></g>`).join("")}`,
+// 9 Itzcuintli — a standing xoloitzcuintle, wagging tail
+()=>`<g class="a-sway" style="--o:52px 116px;--a:14deg;--t:.8s">
+  <path d="M52,116 C30,106 28,84 40,78 C48,74 56,82 48,88" fill="none" stroke="${K}" stroke-width="11"/>
+  <path d="M52,116 C30,106 28,84 40,78 C48,74 56,82 48,88" fill="none" stroke="#8B6A55" stroke-width="5"/>
+</g>
+${[[62,130,58,170],[76,132,74,172],[126,130,130,170],[140,128,146,168]].map(([x1,y1,x2,y2],i)=>`<path d="M${x1},${y1} L${(x1+x2)/2+(i%2?3:-3)},${(y1+y2)/2} L${x2},${y2}" fill="none" stroke="${K}" stroke-width="11"/><path d="M${x1},${y1} L${(x1+x2)/2+(i%2?3:-3)},${(y1+y2)/2} L${x2},${y2}" fill="none" stroke="#8B6A55" stroke-width="5"/><path d="M${x2-6},${y2+2} L${x2+8},${y2+2}" stroke-width="5"/>`).join("")}
+<path d="M50,112 C70,100 120,100 142,108 C152,112 152,128 142,134 C120,140 70,140 52,134 C42,128 42,116 50,112Z" fill="#8B6A55"/>
+<path d="M60,124 C80,130 110,130 134,124" fill="none" class="thin"/>
+${[[74,116],[100,112],[118,120]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${PNK}" class="thin"/>`).join("")}
+<g class="a-sway" style="--o:140px 110px;--a:3deg;--t:3s">
+  <g class="a-twitch" style="--o:156px 80px;--a:-10deg;--t:3.2s"><path d="M150,84 L146,50 L166,78Z M160,80 L166,48 L176,80Z" fill="#8B6A55"/><path d="M152,76 L150,60 L158,74Z M164,74 L167,58 L171,76Z" fill="${PNK}" class="ns"/></g>
+  <path d="M138,114 C136,94 148,78 166,76 L186,82 C194,86 192,96 184,98 L168,102 C160,112 150,118 138,114Z" fill="#8B6A55"/>
+  <ellipse cx="189" cy="88" rx="5" ry="4.5" fill="${K}" class="ns"/>
+  ${eye(168,87,6.5)}
+  <path d="M168,102 L186,98" class="thin"/>
+  <g class="a-pant" style="--o:178px 100px;--t:.7s"><path d="M174,100 C174,112 182,114 186,106 L184,99Z" fill="${RED}"/></g>
+  <path d="M136,100 C142,108 146,114 148,118" fill="none" stroke="${RED}" stroke-width="6"/>
+</g>`,
+// 10 Ozomatli — sitting monkey with a spiral tail, waving
+()=>`<g class="a-sway" style="--o:72px 160px;--a:6deg;--t:3.6s">
+  <path d="M74,162 C32,164 20,122 38,104 C52,90 76,100 72,118 C68,130 52,128 54,118" fill="none" stroke="${K}" stroke-width="12"/>
+  <path d="M74,162 C32,164 20,122 38,104 C52,90 76,100 72,118 C68,130 52,128 54,118" fill="none" stroke="#6b4430" stroke-width="6"/>
+</g>
+<path d="M70,172 C56,140 64,108 92,102 C118,98 134,120 132,150 C130,166 116,176 96,176Z" fill="#6b4430"/>
+<path d="M98,172 C120,174 142,168 146,156 C138,148 120,152 108,160Z" fill="#6b4430"/>
+<path d="M140,160 C150,158 156,164 152,170 L140,172Z" fill="${PNK}" class="thin"/>
+<path d="M90,124 C98,140 98,156 90,168" fill="none" stroke="${PNK}" stroke-width="5" opacity=".7"/>
+<g class="a-sway" style="--o:112px 116px;--a:10deg;--t:2.2s">
+  <path d="M108,118 C124,108 140,102 150,90" fill="none" stroke="${K}" stroke-width="12"/>
+  <path d="M108,118 C124,108 140,102 150,90" fill="none" stroke="#6b4430" stroke-width="6"/>
+  <circle cx="152" cy="88" r="7" fill="${PNK}"/>
+</g>
+<g class="a-sway" style="--o:104px 100px;--a:5deg;--t:4.4s">
+  <path d="M100,48 C94,34 100,22 112,22 C122,24 122,36 114,38 C108,40 106,32 110,30" fill="none" stroke-width="5"/>
+  <path d="M80,82 C76,58 92,44 110,46 C130,48 140,64 136,82 C132,98 116,104 100,100 C88,98 82,92 80,82Z" fill="#6b4430"/>
+  <path d="M110,58 C128,56 140,70 135,84 C130,96 114,98 106,90 C100,80 100,64 110,58Z" fill="${PNK}"/>
+  ${eye(122,72,6.5)}
+  <path d="M112,64 C118,60 128,60 132,64" fill="none" stroke-width="3"/>
+  <path d="M116,88 C122,92 130,90 134,86" fill="none" class="thin"/>
+  <circle cx="88" cy="76" r="8" fill="${PNK}"/>
+  <g class="a-sway" style="--o:88px 84px;--a:16deg;--t:1.6s"><circle cx="88" cy="94" r="6" fill="none" stroke="${OCH}" stroke-width="4"/></g>
+</g>`,
+// 11 Malinalli — twisted grass, bound at the root, blades swaying
+()=>`${[-56,-38,-20,-6,6,20,38,56].map((a,i)=>`<g class="a-sway" style="--o:100px 82px;--a:${3+(i%3)}deg;--t:${3+(i%4)*.4}s;animation-delay:${-i*.35}s"><path d="M100,82 C${100+a*.4},56 ${100+a*.8},36 ${100+a*1.15},${20+Math.abs(a)*.5}" fill="none" stroke="${K}" stroke-width="8"/><path d="M100,82 C${100+a*.4},56 ${100+a*.8},36 ${100+a*1.15},${20+Math.abs(a)*.5}" fill="none" stroke="${i%2?GRN:OCH}" stroke-width="3.5"/></g>`).join("")}
+<g class="a-sway" style="--o:100px 160px;--a:1.5deg;--t:4s">
+<path d="M100,160 C70,140 130,120 100,100 C80,90 100,80 100,80" fill="none" stroke="${K}" stroke-width="20"/>
+<path d="M100,160 C70,140 130,120 100,100 C80,90 100,80 100,80" fill="none" stroke="${GRN}" stroke-width="12"/>
+<path d="M100,160 C130,140 70,120 100,100 C120,90 100,80 100,80" fill="none" stroke="${K}" stroke-width="20"/>
+<path d="M100,160 C130,140 70,120 100,100 C120,90 100,80 100,80" fill="none" stroke="${OCH}" stroke-width="12"/>
+<rect x="84" y="150" width="32" height="14" rx="3" fill="${RED}"/>
+<path d="M84,157 L116,157" class="thin"/>
+<path d="M90,164 C86,174 80,178 74,180 M100,164 L100,182 M110,164 C114,174 120,178 126,180" fill="none" stroke-width="3"/>
+<circle cx="100" cy="122" r="4" fill="${WHT}" class="thin"/>
+</g>`,
+// 12 Ácatl — bundle of reed arrows with fletching
+()=>`${[[-18,TUR],[0,WHT],[18,RED]].map(([dx,c],i)=>`<g class="a-sway" style="--o:100px 170px;--a:${i==1?1.5:2.5}deg;--t:4.6s;animation-delay:${-i*.5}s">
+  <path d="M100,170 L${100+dx*1.6},34" fill="none" stroke="${K}" stroke-width="14"/>
+  <path d="M100,170 L${100+dx*1.6},34" fill="none" stroke="${OCH}" stroke-width="7"/>
+  ${[70,96,122].map(y=>{const x=100+dx*1.6*(170-y)/136;return `<path d="M${x-6},${y} L${x+6},${y}" stroke="${RED}" stroke-width="4"/>`}).join("")}
+  <g class="a-sway" style="--o:${100+dx*1.6}px 50px;--a:7deg;--t:1.8s;animation-delay:${-i*.4}s">
+    <path d="M${100+dx*1.6},56 C${100+dx*1.6-16},44 ${100+dx*1.6-14},24 ${100+dx*1.6-4},14 L${100+dx*1.6},34Z" fill="${c}"/>
+    <path d="M${100+dx*1.6},56 C${100+dx*1.6+16},44 ${100+dx*1.6+14},24 ${100+dx*1.6+4},14 L${100+dx*1.6},34Z" fill="${c}"/>
+  </g></g>`).join("")}
+<path d="M80,150 C90,146 110,146 120,150 L120,162 C110,166 90,166 80,162Z" fill="${RED}"/>
+<path d="M120,154 C134,150 140,160 132,166 M80,154 C66,150 60,160 68,166" fill="none" stroke="${RED}" stroke-width="5"/>
+<path d="M80,156 L120,156" class="thin"/>`,
+// 13 Océlotl — jaguar face seen from the front
+()=>`${[[56,58,-1],[144,58,1]].map(([x,y,s],i)=>`<g class="a-twitch" style="--o:${x}px ${y+12}px;--a:${s*10}deg;--t:4.8s;animation-delay:${-i*.4}s"><circle cx="${x}" cy="${y}" r="17" fill="${OCH}"/><circle cx="${x}" cy="${y}" r="8" fill="${K}" class="ns"/></g>`).join("")}
+<path d="M38,98 C38,62 68,44 100,44 C132,44 162,62 162,98 C162,134 136,162 100,162 C64,162 38,134 38,98Z" fill="${OCH}"/>
+${[[100,58],[78,66],[122,66],[56,96],[144,96],[60,124],[140,124],[88,50],[112,50]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="6" fill="none" stroke-width="3"/><circle cx="${x}" cy="${y}" r="1.8" fill="${K}" class="ns"/>`).join("")}
+${[[78,92,1],[122,92,-1]].map(([x,y,s],i)=>`<path d="M${x-14},${y-12} C${x-4},${y-18} ${x+8},${y-16} ${x+14},${y-8}" fill="none" stroke-width="4" transform="${s<0?`scale(-1 1) translate(-${2*x} 0)`:""}"/><g class="a-blink" style="--o:${x}px ${y}px"><path d="M${x-14},${y} C${x-8},${y-10} ${x+8},${y-10} ${x+14},${y} C${x+8},${y+10} ${x-8},${y+10} ${x-14},${y}Z" fill="#E9D27A"/><ellipse cx="${x}" cy="${y}" rx="3" ry="7" fill="${K}" class="ns"/></g>`).join("")}
+<path d="M74,124 C76,108 124,108 126,124 C126,142 114,150 100,150 C86,150 74,142 74,124Z" fill="${WHT}"/>
+<path d="M90,112 L110,112 L100,124Z" fill="${K}"/>
+<path d="M100,124 L100,132 M86,134 C94,138 106,138 114,134" fill="none" stroke-width="3"/>
+<path d="M88,135 L91,148 L95,136Z M112,135 L109,148 L105,136Z" fill="${WHT}" class="thin"/>
+${[-1,1].map(s=>`<path d="M${100+s*28},126 L${100+s*56},120 M${100+s*28},132 L${100+s*56},136" class="thin"/>${[0,1,2].map(k=>`<circle cx="${100+s*(64+k*6)}" cy="${118+k*5}" r="1.6" fill="${K}" class="ns"/>`).join("")}`).join("")}`,
+// 14 Cuauhtli — eagle with spread wings, seen from the front
+()=>`${[-1,1].map(s=>`<g class="a-sway" style="--o:${100+s*12}px 96px;--a:${s*5}deg;--t:2.4s">
+  <path d="M${100+s*12},90 C${100+s*40},68 ${100+s*70},58 ${100+s*88},66 C${100+s*78},74 ${100+s*82},84 ${100+s*72},88 C${100+s*80},96 ${100+s*76},106 ${100+s*64},106 C${100+s*70},114 ${100+s*64},122 ${100+s*52},118 C${100+s*42},122 ${100+s*28},116 ${100+s*12},112Z" fill="${BRN}"/>
+  ${[0,1,2,3].map(k=>`<path d="M${100+s*(24+k*12)},${100-k*4} L${100+s*(52+k*10)},${112-k*12}" class="thin"/>`).join("")}
+  ${[[86,66],[78,88],[66,106],[52,118]].map(([x,y],k)=>`<path d="M${100+s*x},${y} l${s*-3},${-6} l${s*8},${2}Z" fill="${WHT}" class="thin"/>`).join("")}
+</g>`).join("")}
+${[-24,-12,0,12,24].map((a,i)=>`<g transform="rotate(${a} 100 140)"><path d="M100,140 C92,150 92,168 100,180 C108,168 108,150 100,140Z" fill="${WHT}"/><path d="M96,170 C98,176 102,176 104,170 L100,180Z" fill="${K}" class="ns"/></g>`).join("")}
+<ellipse cx="100" cy="114" rx="20" ry="32" fill="${WHT}"/>
+${[100,112,124].map(y=>`<path d="M90,${y} L100,${y+6} L110,${y}" fill="none" stroke="${BRN}" stroke-width="3"/>`).join("")}
+${[88,112].map(x=>`<path d="M${x},140 L${x},150 M${x-6},152 L${x},148 L${x+6},152" fill="none" stroke="${OCH}" stroke-width="5"/>`).join("")}
+<g class="a-sway" style="--o:100px 86px;--a:6deg;--t:3.2s">
+  ${[0,1,2].map(k=>`<path d="M${86-k*2},64 C${74-k*6},${54-k*6} ${70-k*8},${44-k*4} ${72-k*10},${36-k*2} C${82-k*6},${42-k*2} ${88-k*2},${52-k*2} ${92},60Z" fill="${k%2?K:WHT}"/>`).join("")}
+  <path d="M84,86 C80,66 90,52 106,52 C118,52 124,60 126,66 L128,82 L112,90Z" fill="${BRN}"/>
+  <path d="M122,60 C140,60 150,72 146,88 C142,80 136,78 126,80Z" fill="${OCH}"/>
+  <path d="M120,58 C124,54 132,54 136,60" fill="${RED}" class="thin"/>
+  <path d="M96,62 C102,58 112,58 116,62" fill="none" stroke-width="4"/>
+  <g class="a-blink" style="--o:108px 68px"><circle cx="108" cy="68" r="6.5" fill="${OCH}"/><circle cx="109.5" cy="68" r="3" fill="${K}" class="ns"/></g>
+</g>`,
+// 15 Cozcacuauhtli — king vulture: bare neck, hooked beak, bead necklace over a feather ruff
+()=>`<g class="a-peck" style="--o:100px 142px;--t:3.4s">
+  <path d="M84,144 C80,122 86,104 92,94 L120,94 C118,110 116,126 118,144Z" fill="#C9586A"/>
+  ${[110,122,134].map((y,i)=>`<path d="M${88+i},${y} C${96},${y-4} ${106},${y+4} ${114-i},${y-2}" fill="none" class="thin"/>`).join("")}
+  <path d="M88,100 C82,74 96,56 118,56 C134,56 144,66 146,78 L150,96 L122,104Z" fill="#E07A3E"/>
+  <path d="M96,66 C104,60 118,58 126,62 M92,82 C98,78 104,80 106,86" fill="none" class="thin"/>
+  <path d="M90,74 C84,62 92,52 100,54 C98,62 100,70 104,74Z" fill="#7B4E8C" class="thin"/>
+  <path d="M140,74 C164,72 178,88 172,108 C168,100 160,98 150,98 L144,96Z" fill="${WHT}"/>
+  <path d="M166,94 C172,100 172,106 170,110" fill="none" stroke-width="5"/>
+  <path d="M136,70 C134,58 146,52 152,60 C156,66 150,74 142,74Z" fill="${OCH}"/>
+  <g class="a-blink" style="--o:124px 78px"><circle cx="124" cy="78" r="8" fill="${WHT}"/><circle cx="124" cy="78" r="5" fill="${RED}" class="thin"/><circle cx="125" cy="78" r="2.2" fill="${K}" class="ns"/></g>
+</g>
+<path d="M24,184 C34,150 66,136 100,136 C134,136 166,150 176,184Z" fill="${K}"/>
+${Array.from({length:13},(_,i)=>{const a=Math.PI*(1.08+i*.84/12);return `<path d="M${100+70*Math.cos(a)},${184+44*Math.sin(a)} L${100+38*Math.cos(a)},${184+30*Math.sin(a)}" stroke="${WHT}" stroke-width="2"/>`}).join("")}
+${Array.from({length:7},(_,i)=>{const a=Math.PI*(1.15+i*.7/6);return `<circle cx="${100+52*Math.cos(a)}" cy="${170+30*Math.sin(a)}" r="6.5" fill="${i%2?OCH:TUR}"/>`}).join("")}`,
+// 16 Ollin — movement: four lobes around a central eye
+()=>`<g class="a-osc" style="--o:100px 100px;--t:6s">
+  ${[[45,RED],[135,TUR],[225,RED],[315,TUR]].map(([a,c])=>`<g transform="rotate(${a} 100 100)">
+    <path d="M100,86 C108,62 112,40 104,26 C122,22 140,30 142,48 C144,62 132,70 124,66 C120,64 120,58 124,56" fill="${c}" stroke-width="4"/>
+    <path d="M100,86 C108,62 112,40 104,26" fill="none" stroke="${WHT}" stroke-width="3" stroke-dasharray="3 6"/>
+    <circle cx="128" cy="44" r="4" fill="${WHT}" class="thin"/></g>`).join("")}
+  <path d="M60,60 L140,140 M140,60 L60,140" stroke="${K}" stroke-width="22"/>
+  <path d="M60,60 L140,140" stroke="${OCH}" stroke-width="14"/><path d="M140,60 L60,140" stroke="${OCH}" stroke-width="14"/>
+  <g class="a-pulse" style="--o:100px 100px"><circle cx="100" cy="100" r="22" fill="${WHT}"/>
+  <path d="M84,100 C92,88 108,88 116,100 C108,112 92,112 84,100Z" fill="${WHT}"/>
+  <circle cx="100" cy="100" r="7" fill="${K}" class="ns"/></g>
+</g>`,
+// 17 Técpatl — sacrificial flint with an eye and a biting mouth
+()=>`<defs><clipPath id="flint"><path d="M100,18 C140,40 152,110 100,182 C48,110 60,40 100,18Z"/></clipPath></defs>
+<g transform="translate(100 100) scale(.86) rotate(28) translate(-100 -100)"><g class="a-osc" style="--o:100px 100px;--t:5s;--a:4deg">
+  <path d="M100,18 C140,40 152,110 100,182 C48,110 60,40 100,18Z" fill="${WHT}"/>
+  <g clip-path="url(#flint)">
+    <rect x="0" y="0" width="100" height="200" fill="${RED}" class="ns"/>
+    <rect class="a-shine ns" x="-40" y="-20" width="22" height="240" fill="#fff" opacity=".5"/>
+  </g>
+  <path d="M100,18 C140,40 152,110 100,182 C48,110 60,40 100,18Z" fill="none"/>
+  <path d="M100,18 L100,182" class="thin"/>
+  <path d="M106,70 C112,62 124,62 130,68" fill="none" stroke-width="4"/>
+  ${eye(118,80,9)}
+  <path d="M142,104 L106,116 L138,132Z" fill="#5a1414"/>
+  <path d="M140,105 L134,112 L128,107 L122,114 L116,109 L110,115 M108,117 L114,120 L119,124 L124,121 L129,127 L134,124 L137,130" fill="none" stroke-width="0"/>
+  ${[[136,106],[126,109],[116,112]].map(([x,y])=>`<path d="M${x-4},${y-1} L${x},${y+8} L${x+5},${y-2}Z" fill="${WHT}" class="thin"/>`).join("")}
+  ${[[134,129],[124,125],[114,120]].map(([x,y])=>`<path d="M${x-4},${y+1} L${x},${y-8} L${x+5},${y+2}Z" fill="${WHT}" class="thin"/>`).join("")}
+</g></g>`,
+// 18 Quiáhuitl — rain god face with goggle eyes, falling drops
+()=>`${[[60,140],[84,150],[108,144],[132,152],[72,168],[120,170],[146,138]].map(([x,y],i)=>`<g class="a-fall" style="--t:1.8s;animation-delay:${-i*.27}s"><path d="M${x},${y-10} C${x+7},${y} ${x+6},${y+6} ${x},${y+6} C${x-6},${y+6} ${x-7},${y} ${x},${y-10}Z" fill="${BLU}"/></g>`).join("")}
+<path d="M44,40 L156,40 L152,56 L48,56Z" fill="${OCH}"/>
+${[60,80,100,120,140].map(x=>`<circle cx="${x}" cy="48" r="4" fill="${WHT}" class="thin"/>`).join("")}
+${[54,70,86,102,118,134,150].map((x,i)=>`<path d="M${x-7},40 C${x-6},26 ${x+6},24 ${x+7},40Z" fill="${i%2?TUR:WHT}"/>`).join("")}
+<path d="M48,56 L152,56 L150,118 C130,130 70,130 50,118Z" fill="${DRK}"/>
+${[[76,80],[124,80]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="17" fill="none" stroke="${TUR}" stroke-width="9"/><circle cx="${x}" cy="${y}" r="21.5" fill="none"/>${eye(x,y,9)}`).join("")}
+<path d="M60,104 C70,96 88,98 100,106 C112,98 130,96 140,104 C138,114 124,114 118,108 C110,114 90,114 82,108 C76,114 62,114 60,104Z" fill="${BLU}"/>
+<path d="M78,112 L82,132 L88,112Z M112,112 L118,132 L122,112Z" fill="${WHT}"/>
+${teeth(90,110,112,8,6.7)}`,
+// 19 Xóchitl — flower in bloom on a stem
+()=>`<path d="M100,112 C98,140 104,160 100,182" fill="none" stroke="${K}" stroke-width="10"/>
+<path d="M100,112 C98,140 104,160 100,182" fill="none" stroke="${GRN}" stroke-width="5"/>
+${[[-1,150],[1,138]].map(([s,y],i)=>`<g class="a-sway" style="--o:100px ${y}px;--a:${s*6}deg;--t:3.6s;animation-delay:${-i}s"><path d="M100,${y} C${100+s*20},${y-20} ${100+s*44},${y-14} ${100+s*52},${y-4} C${100+s*40},${y+8} ${100+s*18},${y+8} 100,${y}Z" fill="${GRN}"/><path d="M100,${y} C${100+s*20},${y-6} ${100+s*36},${y-6} ${100+s*48},${y-4}" fill="none" class="thin"/></g>`).join("")}
+<g class="a-bloom" style="--o:100px 84px;--t:5s">
+  ${[0,45,90,135,180,225,270,315].map((a,i)=>`<g transform="rotate(${a} 100 84)"><path d="M100,84 C${i%2?84:80},${i%2?60:52} ${i%2?92:88},${i%2?38:28} 100,${i%2?34:22} C${i%2?108:112},${i%2?38:28} ${i%2?116:120},${i%2?60:52} 100,84Z" fill="${i%2?OCH:RED}"/><path d="M100,78 L100,${i%2?44:34}" class="thin" opacity=".6"/></g>`).join("")}
+  <circle cx="100" cy="84" r="17" fill="${WHT}"/>
+  <circle cx="100" cy="84" r="9" fill="${OCH}"/>
+  ${[0,60,120,180,240,300].map(a=>`<circle cx="${100+13*Math.cos(a*Math.PI/180)}" cy="${84+13*Math.sin(a*Math.PI/180)}" r="2" fill="${K}" class="ns"/>`).join("")}
+</g>`
+];
+
+
+const BAND = ["#B8322A","#2a1d17","#F8F2E4","#2F7FA8"];
+// A codex-style day tile: framed sign, with the number counted as dots underneath
+function cartouche(r){
+  const n=r.num, gap=15.5, x0=120-(n-1)*gap/2;
+  const dots=Array.from({length:n},(_,i)=>`<circle class="dot" style="animation-delay:${.55+i*.05}s" cx="${x0+i*gap}" cy="236" r="5.6" fill="#2a1d17"/><circle class="dot" style="animation-delay:${.55+i*.05}s" cx="${x0+i*gap}" cy="236" r="2.2" fill="#F1E7D0"/>`).join("");
+  const corner=(x,y,d)=>`<g class="corner" style="animation-delay:${.35+d}s"><circle cx="${x}" cy="${y}" r="7" fill="${BAND[r.dir]}" stroke="#2a1d17" stroke-width="2.5"/><circle cx="${x}" cy="${y}" r="2.4" fill="#2a1d17"/></g>`;
+  return `<rect x="4" y="4" width="232" height="256" rx="10" fill="#F1E7D0" stroke="#2a1d17" stroke-width="3"/>
+  <rect class="band" x="13" y="13" width="214" height="238" rx="5" fill="none" stroke="#2a1d17" stroke-width="10" pathLength="1000"/>
+  <rect class="band" x="13" y="13" width="214" height="238" rx="5" fill="none" stroke="${BAND[r.dir]}" stroke-width="5" pathLength="1000"/>
+  ${corner(13,13,0)}${corner(227,13,.06)}${corner(227,251,.12)}${corner(13,251,.18)}
+  <svg x="22" y="16" width="196" height="196" viewBox="0 0 200 200" class="glyph"><g class="fig"><g stroke="#2a1d17" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${GLYPHS[r.sign]()}</g></g></svg>
+  <path d="M40,220 L200,220" stroke="#2a1d17" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"/>
+  ${dots}`;
+}
+
+const $ = id => document.getElementById(id);
+const noon = d => { const x = new Date(d); x.setHours(12,0,0,0); return x; };
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return noon(x); };
+const sameDay = (a,b) => a.toDateString() === b.toDateString();
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const deM = m => /^[AEIOUÁÉÍÓÚ]/.test(m) ? `d’` : `de `;
+const fmt = new Intl.DateTimeFormat("ca-ES",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const longD = new Intl.DateTimeFormat("ca-ES",{day:"numeric",month:"long"});
+const shortD = new Intl.DateTimeFormat("ca-ES",{day:"numeric",month:"short"});
+const monthY = new Intl.DateTimeFormat("ca-ES",{month:"long",year:"numeric"});
+const themeVars = ["--bg-0","--bg-1","--bg-2","--bg-3"];
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+const ICONS = { v: `<svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><circle cx="5.0" cy="4" r="1.55" fill="currentColor"/><circle cx="9.67" cy="4" r="1.55" fill="currentColor"/><circle cx="14.34" cy="4" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="4" r="1.55" fill="currentColor"/><circle cx="5.0" cy="8" r="1.55" fill="currentColor"/><circle cx="9.67" cy="8" r="1.55" fill="currentColor"/><circle cx="14.34" cy="8" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="8" r="1.55" fill="currentColor"/><circle cx="5.0" cy="12" r="1.55" fill="currentColor"/><circle cx="9.67" cy="12" r="1.55" fill="currentColor"/><circle cx="14.34" cy="12" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="12" r="1.55" fill="currentColor"/><circle cx="5.0" cy="16" r="1.55" fill="currentColor"/><circle cx="9.67" cy="16" r="1.55" fill="currentColor"/><circle cx="14.34" cy="16" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="16" r="1.55" fill="currentColor"/><circle cx="5.0" cy="20" r="1.55" fill="currentColor"/><circle cx="9.67" cy="20" r="1.55" fill="currentColor"/><circle cx="14.34" cy="20" r="1.55" fill="currentColor"/><circle cx="19.009999999999998" cy="20" r="1.55" fill="currentColor"/></svg>`, m: `<svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2zM4.5 10h15M8.5 3.5v3.5M15.5 3.5v3.5M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>` };
+
+let cur = noon(new Date());
+let view = "v";
+// last calendar type chosen, kept on this device
+try { const saved = localStorage.getItem("tonalli-view"); if (saved === "v" || saved === "m") view = saved; } catch(e) {}
+
+/* ---------- day screen ---------- */
+function fitSign(){
+  const el=$("sign"); el.style.fontSize="";
+  const max = el.parentElement.parentElement.clientWidth;
+  if (el.scrollWidth > max) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * max / el.scrollWidth * 0.98) + "px";
+}
+function render(){
+  const r = mexica(cur);
+  document.body.dataset.dir = r.dir;
+  document.querySelector('meta[name="theme-color"]').content =
+    getComputedStyle(document.documentElement).getPropertyValue(themeVars[r.dir]).trim();
+  $("gdate").textContent = cap(fmt.format(cur));
+  $("picker").value = iso(cur);
+  $("cart").innerHTML = cartouche(r);
+  $("cart").setAttribute("aria-label", `Signe ${r.signName} amb ${r.num} punts`);
+  $("sign").textContent = r.signName; fitSign();
+  $("reading").innerHTML = `${r.numName} ${r.signName}<br><i>${r.num} ${r.gloss}</i>, rumb ${r.dirName}`;
+  $("monthCap").textContent = r.month === "Nemontemi" ? "Dies sense nom" : "Veintena";
+  $("month").innerHTML = `<b>${r.month}</b>dia ${r.monthDay} de ${r.monthLen}`;
+  $("ticks").style.setProperty("--n", r.monthLen);
+  $("ticks").innerHTML = Array.from({length:r.monthLen},(_,i)=>
+    `<span class="${i+1<r.monthDay?'past':i+1===r.monthDay?'now':''}"></span>`).join("");
+  $("year").innerHTML = `<b>${r.year}</b>`;
+  $("monthBtn").setAttribute("aria-label", `${r.month}, dia ${r.monthDay} de ${r.monthLen}. Any ${r.year}. Obre el calendari`);
+  $("today").classList.toggle("hide", sameDay(cur,new Date()));
+  document.title = `${r.num} ${r.signName}`;
+}
+function show(date){
+  const el=$("day");
+  if (reduce.matches){ cur=date; render(); return; }
+  el.classList.add("out");
+  setTimeout(()=>{ cur=date; render(); el.classList.remove("out"); },160);
+}
+const step = n => show(addDays(cur,n));
+$("prev").onclick=()=>step(-1);
+$("next").onclick=()=>step(1);
+$("today").onclick=()=>show(noon(new Date()));
+$("picker").onchange=e=>{ if(!e.target.value) return; const [y,m,d]=e.target.value.split("-").map(Number); show(new Date(y,m-1,d,12)); };
+
+/* ---------- iOS-style menu ---------- */
+let menuFrom=null;
+function openMenu(btn){
+  menuFrom=btn;
+  document.querySelectorAll("#menu [data-view]").forEach(b=>b.setAttribute("aria-checked", b.dataset.view===view));
+  const layer=$("menuLayer"), m=$("menu"); layer.hidden=false;
+  const r=btn.getBoundingClientRect(), w=m.offsetWidth, right = r.left > innerWidth/2;
+  m.style.top = (r.bottom + 8) + "px";
+  m.style.left = right ? Math.max(16, r.right - w) + "px" : Math.max(16, r.left) + "px";
+  m.style.transformOrigin = right ? "top right" : "top left";
+  btn.setAttribute("aria-expanded","true");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>m.classList.add("open")));
+}
+function closeMenu(){
+  const m=$("menu"); m.classList.remove("open");
+  if (menuFrom) menuFrom.setAttribute("aria-expanded","false");
+  setTimeout(()=>{ $("menuLayer").hidden=true; }, reduce.matches?0:200);
+}
+$("menuLayer").addEventListener("click", e=>{ if(!e.target.closest("button")) closeMenu(); });
+document.querySelectorAll("#menu [data-view]").forEach(b=>b.onclick=()=>{
+  const changed = view !== b.dataset.view;
+  view=b.dataset.view; try{ localStorage.setItem("tonalli-view",view); }catch(e){}
+  closeMenu();
+  if (changed) buildSheet();
+});
+$("calBtn").onclick=openSheet;
+$("viewBtn").onclick=()=>openMenu($("viewBtn"));
+
+/* ---------- calendar sheet: one continuous scroll, like the iOS Calendar ---------- */
+// The 20 drawings are defined once as symbols and reused in every cell (static, no animation)
+(()=>{ const unanim = s => s.replace(/class="([^"]*)"/g,(m,c)=>`class="${c.replace(/\ba-[a-z]+\b/g,"").trim()}"`).replace(/id="flint"/,'id="flint-s"').replace(/url\(#flint\)/,"url(#flint-s)");
+  const sp=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  sp.setAttribute("class","glyph"); sp.setAttribute("aria-hidden","true"); sp.style.cssText="position:absolute;width:0;height:0;overflow:hidden";
+  sp.innerHTML = GLYPHS.map((g,i)=>`<symbol id="gs${i}" viewBox="0 0 200 200"><g stroke="#2a1d17" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${unanim(g())}</g></symbol>`).join("");
+  document.body.prepend(sp); })();
+const tile = sign => `<svg viewBox="0 0 200 200" aria-hidden="true"><use href="#gs${sign}"/></svg>`;
+const veintenaStart = d => addDays(d, -(mexica(d).monthDay-1));
+const monthStart = d => new Date(d.getFullYear(), d.getMonth(), 1, 12);
+const periodStart = d => view==="v" ? veintenaStart(d) : monthStart(d);
+const periodLen = s => view==="v" ? mexica(s).monthLen : new Date(s.getFullYear(), s.getMonth()+1, 0).getDate();
+const nextStart = s => view==="v" ? addDays(s, periodLen(s)) : new Date(s.getFullYear(), s.getMonth()+1, 1, 12);
+const prevStart = s => view==="v" ? veintenaStart(addDays(s,-1)) : new Date(s.getFullYear(), s.getMonth()-1, 1, 12);
+let first=null, last=null, loading=false;
+
+function periodHTML(s){
+  const today=noon(new Date()), len=periodLen(s), end=addDays(s,len-1), isNow = today>=s && today<=end;
+  let head, cells="";
+  if (view==="v"){
+    const sameY = s.getFullYear()===end.getFullYear();
+    const range = sameY ? `del ${longD.format(s)} al ${longD.format(end)} del ${end.getFullYear()}`
+                        : `del ${longD.format(s)} del ${s.getFullYear()} al ${longD.format(end)} del ${end.getFullYear()}`;
+    head=`<h3>${mexica(s).month} <span>${mexica(s).year}</span></h3><p>${range}</p>`;
+  } else {
+    const r0=mexica(s), r1=mexica(end), m=cap(new Intl.DateTimeFormat("ca-ES",{month:"long"}).format(s));
+    head=`<h3>${m} <span>${s.getFullYear()}</span></h3><p>${r0.month===r1.month ? r0.month : `${r0.month} i ${r1.month}`}</p>`;
+    for(let i=0;i<(s.getDay()+6)%7;i++) cells+=`<span class="cell blank"></span>`;
+  }
+  for(let i=0;i<len;i++){
+    const d=addDays(s,i), r=mexica(d);
+    const cls=["cell", sameDay(d,today)?"today":"", sameDay(d,cur)?"sel":""].join(" ");
+    cells += view==="v"
+      ? `<button class="${cls}" data-d="${iso(d)}" aria-label="${r.num} ${r.signName}, ${longD.format(d)}">${tile(r.sign)}<span class="num">${r.num}</span><span class="n" style="${r.signName.length>11?"font-size:10.5px;letter-spacing:-.03em":""}">${r.signName}</span><span class="g">${shortD.format(d)}</span></button>`
+      : `<button class="${cls}" data-d="${iso(d)}" aria-label="${longD.format(d)}, ${r.num} ${r.signName}"><span class="d">${d.getDate()}</span>${tile(r.sign)}<span class="mx">${r.num}</span></button>`;
+  }
+  return `<section class="period${isNow?" now":""}" data-s="${iso(s)}" data-e="${iso(end)}">${head}<div class="grid ${view}">${cells}</div></section>`;
+}
+function appendPeriods(n){ let h=""; for(let i=0;i<n;i++){ last=nextStart(last); h+=periodHTML(last); } $("scroller").insertAdjacentHTML("beforeend",h); }
+function prependPeriods(n){
+  const sc=$("scroller"), before=sc.scrollHeight; let h="";
+  for(let i=0;i<n;i++){ first=prevStart(first); h=periodHTML(first)+h; }
+  sc.insertAdjacentHTML("afterbegin",h); sc.scrollTop += sc.scrollHeight-before;
+}
+function scrollToPeriod(start, smooth){
+  const el=$("scroller").querySelector(`[data-s="${iso(start)}"]`); if(!el) return;
+  $("scroller").scrollTo({top: el.offsetTop - 4, behavior: smooth && !reduce.matches ? "smooth" : "auto"});
+}
+function buildSheet(anchor=cur){
+  const s=$("sheet"); s.dataset.view=view;
+  $("viewBtn").innerHTML = ICONS[view];
+  $("wk").hidden = view!=="m";
+  const start=periodStart(anchor); first=start; last=start;
+  $("scroller").innerHTML = periodHTML(start);
+  prependPeriods(view==="v"?4:6); appendPeriods(view==="v"?6:12);
+  scrollToPeriod(start,false); updateSheetBar();
+}
+// keep the bar title on the period being read, and show "Avui" only when today is off screen
+function updateSheetBar(){
+  const sc=$("scroller"), top=sc.getBoundingClientRect().top+60, today=iso(noon(new Date()));
+  let curSec=null, todayVisible=false;
+  for (const sec of sc.children){
+    const r=sec.getBoundingClientRect();
+    if (!curSec && r.bottom>top) curSec=sec;
+    if (sec.dataset.s<=today && today<=sec.dataset.e && r.bottom>sc.getBoundingClientRect().top && r.top<sc.getBoundingClientRect().bottom) todayVisible=true;
+  }
+  if (curSec) $("sbarTitle").textContent = curSec.querySelector("h3").textContent;
+
+}
+$("scroller").addEventListener("scroll", ()=>{
+  const sc=$("scroller");
+  if (!loading && sc.scrollTop < 900){ loading=true; prependPeriods(3); loading=false; }
+  if (!loading && sc.scrollHeight - sc.scrollTop - sc.clientHeight < 900){ loading=true; appendPeriods(3); loading=false; }
+  requestAnimationFrame(updateSheetBar);
+},{passive:true});
+function openSheet(){
+  const s=$("sheet"), d=$("dim");
+  if (s.hidden){ s.hidden=false; d.hidden=false; buildSheet();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ s.classList.add("open"); d.classList.add("open"); })); }
+  else buildSheet();
+  s.focus({preventScroll:true});
+}
+function closeSheet(){
+  const s=$("sheet"), d=$("dim"); s.classList.remove("open"); d.classList.remove("open"); s.style.transform="";
+  setTimeout(()=>{ s.hidden=true; d.hidden=true; $("scroller").innerHTML=""; }, reduce.matches?0:420);
+}
+$("monthBtn").onclick=openSheet;
+$("closeBtn").onclick=closeSheet;
+$("dim").onclick=closeSheet;
+// "Avui": centre today's cell on screen, then make it pulse so it is easy to spot
+$("pToday").onclick=()=>{
+  const today=noon(new Date()), sc=$("scroller");
+  if (!sc.querySelector(`[data-s="${iso(periodStart(today))}"]`)) buildSheet(today);
+  const c=sc.querySelector(".cell.today"); if(!c) return;
+  const top=Math.max(0, c.offsetTop - (sc.clientHeight - c.offsetHeight)/2);
+  const pulse=()=>{ c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); };
+  if (Math.abs(sc.scrollTop-top) < 4 || reduce.matches){ sc.scrollTop=top; pulse(); return; }
+  let done=false; const once=()=>{ if(done) return; done=true; sc.removeEventListener("scrollend",once); pulse(); };
+  sc.addEventListener("scrollend",once); setTimeout(once,1200);
+  sc.scrollTo({top, behavior:"smooth"});
+};
+$("scroller").onclick=e=>{ const b=e.target.closest("button.cell"); if(!b) return;
+  const [y,m,d]=b.dataset.d.split("-").map(Number); closeSheet(); show(new Date(y,m-1,d,12)); };
+
+// drag the sheet down to dismiss, as on iOS
+(()=>{ let y0=null, dy=0; const s=$("sheet");
+  const start=e=>{ y0=e.touches[0].clientY; dy=0; s.classList.add("drag"); };
+  const move=e=>{ if(y0===null) return; dy=Math.max(0, e.touches[0].clientY-y0); s.style.transform=`translateY(${dy}px)`; };
+  const end=()=>{ if(y0===null) return; s.classList.remove("drag"); y0=null; if(dy>110) closeSheet(); else s.style.transform=""; };
+  [s.querySelector(".grab"), $("sbar")].forEach(el=>{ el.addEventListener("touchstart",start,{passive:true}); el.addEventListener("touchmove",move,{passive:true}); el.addEventListener("touchend",end); });
+})();
+
+/* ---------- gestures & keys ---------- */
+const overlayOpen=()=>!$("sheet").hidden || !$("menuLayer").hidden;
+addEventListener("keydown",e=>{
+  if (e.key==="Escape"){ if(!$("menuLayer").hidden) closeMenu(); else if(!$("sheet").hidden) closeSheet(); return; }
+  if (overlayOpen()) return;
+  if(e.key==="ArrowLeft")step(-1); if(e.key==="ArrowRight")step(1);
+});
+let sx=null, sy=null;
+addEventListener("touchstart",e=>{sx=e.touches[0].clientX; sy=e.touches[0].clientY},{passive:true});
+addEventListener("touchend",e=>{ if(sx===null||overlayOpen()){sx=null;return;} const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) step(dx<0?1:-1); sx=null; },{passive:true});
+let lastOpen = noon(new Date());
+document.addEventListener("visibilitychange",()=>{
+  if (document.hidden) return; const now=noon(new Date());
+  if (!sameDay(now,lastOpen)){ lastOpen=now; cur=now; render(); }
+});
+addEventListener("resize", fitSign);
+document.fonts && document.fonts.ready.then(fitSign);
+render();
+</script>
+</body>
+</html>
