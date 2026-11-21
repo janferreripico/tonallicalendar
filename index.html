@@ -44,7 +44,7 @@
   --bg-2:#4B4741; --ink-2:#F2EEE6; --soft-2:rgba(242,238,230,.6); --line-2:rgba(242,238,230,.22);
   --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
 }
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0)}
+html{height:100%;min-height:100dvh;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
 *,*::before,*::after{box-sizing:inherit}
 body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
@@ -113,8 +113,8 @@ main{
 :root{--sys:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Instrument Sans", system-ui, sans-serif}
 body{--glass:color-mix(in srgb, var(--ink) 13%, transparent); --glass-on:color-mix(in srgb, var(--ink) 24%, transparent)}
 main{grid-template-rows:52px 1fr 104px 64px; grid-template-columns:minmax(0,1fr)}
-.top{display:grid; grid-template-columns:44px minmax(0,1fr) 44px; column-gap:8px; align-items:center}
-.top .gdate{max-width:100%; overflow:hidden; text-overflow:ellipsis; padding:0 8px}
+.top{display:grid; grid-template-columns:minmax(0,1fr) 44px; column-gap:12px; align-items:center}
+.top .gdate{justify-self:start; max-width:100%; overflow:hidden; text-overflow:ellipsis; padding:0 8px 0 2px; margin-left:-2px}
 .gdate{font-family:var(--sys)}
 .round,.pill{
   -webkit-appearance:none; appearance:none; border:0; margin:0; cursor:pointer; color:var(--ink);
@@ -259,7 +259,6 @@ nav .pill.hide{opacity:0; transform:scale(.8); pointer-events:none}
 <body data-dir="0">
 <main>
   <header class="top">
-    <span></span>
     <label class="gdate"><span id="gdate"></span><input id="picker" type="date" aria-label="Tria una data"></label>
     <button class="round" id="calBtn" aria-label="Obre el calendari"><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="M4.5 7.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2zM4.5 10h15M8.5 3.5v3.5M15.5 3.5v3.5M8 13.5h.01M12 13.5h.01M16 13.5h.01M8 17h.01M12 17h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </header>
@@ -663,8 +662,8 @@ function cartouche(r){
   const dots=Array.from({length:n},(_,i)=>`<circle class="dot" style="animation-delay:${.55+i*.05}s" cx="${x0+i*gap}" cy="236" r="5.6" fill="#2a1d17"/><circle class="dot" style="animation-delay:${.55+i*.05}s" cx="${x0+i*gap}" cy="236" r="2.2" fill="#F1E7D0"/>`).join("");
   const corner=(x,y,d)=>`<g class="corner" style="animation-delay:${.35+d}s"><circle cx="${x}" cy="${y}" r="7" fill="${BAND[r.dir]}" stroke="#2a1d17" stroke-width="2.5"/><circle cx="${x}" cy="${y}" r="2.4" fill="#2a1d17"/></g>`;
   return `<rect x="4" y="4" width="232" height="256" rx="10" fill="#F1E7D0" stroke="#2a1d17" stroke-width="3"/>
-  <rect class="band" x="13" y="13" width="214" height="238" rx="5" fill="none" stroke="#2a1d17" stroke-width="10" pathLength="1000"/>
-  <rect class="band" x="13" y="13" width="214" height="238" rx="5" fill="none" stroke="${BAND[r.dir]}" stroke-width="5" pathLength="1000"/>
+  <path class="band" d="M18,13 H222 A5,5 0 0 1 227,18 V246 A5,5 0 0 1 222,251 H18 A5,5 0 0 1 13,246 V18 A5,5 0 0 1 18,13 Z" fill="none" stroke="#2a1d17" stroke-width="10"/>
+  <path class="band" d="M18,13 H222 A5,5 0 0 1 227,18 V246 A5,5 0 0 1 222,251 H18 A5,5 0 0 1 13,246 V18 A5,5 0 0 1 18,13 Z" fill="none" stroke="${BAND[r.dir]}" stroke-width="5"/>
   ${corner(13,13,0)}${corner(227,13,.06)}${corner(227,251,.12)}${corner(13,251,.18)}
   <svg x="22" y="16" width="196" height="196" viewBox="0 0 200 200" class="glyph"><g class="fig"><g stroke="#2a1d17" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${GLYPHS[r.sign]()}</g></g></svg>
   <path d="M40,220 L200,220" stroke="#2a1d17" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round"/>
@@ -700,8 +699,10 @@ function fitSign(){
 function render(){
   const r = mexica(cur);
   document.body.dataset.dir = r.dir;
-  document.querySelector('meta[name="theme-color"]').content =
-    getComputedStyle(document.documentElement).getPropertyValue(themeVars[r.dir]).trim();
+  // paint the whole screen, including behind the status bar and home indicator, in the day's colour
+  const bg = getComputedStyle(document.documentElement).getPropertyValue(themeVars[r.dir]).trim();
+  document.documentElement.style.backgroundColor = bg;
+  document.querySelector('meta[name="theme-color"]').content = bg;
   $("gdate").textContent = cap(fmt.format(cur));
   $("picker").value = iso(cur);
   $("cart").innerHTML = cartouche(r);
@@ -887,6 +888,7 @@ document.addEventListener("visibilitychange",()=>{
   if (!sameDay(now,lastOpen)){ lastOpen=now; cur=now; render(); }
 });
 addEventListener("resize", fitSign);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 document.fonts && document.fonts.ready.then(fitSign);
 render();
 </script>
