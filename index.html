@@ -18,7 +18,7 @@
 <style>:root{
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-bottom:max(env(safe-area-inset-bottom,0px), 10px);
   color-scheme:light;
   /* direction palettes: oriente rojo, norte negro, poniente blanco, sur azul */
   --bg-0:#A3123A; --ink-0:#F6E9DA; --soft-0:rgba(246,233,218,.62); --line-0:rgba(246,233,218,.28);
@@ -44,7 +44,7 @@
   --bg-2:#4B4741; --ink-2:#F2EEE6; --soft-2:rgba(242,238,230,.6); --line-2:rgba(242,238,230,.22);
   --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
 }
-html{height:100%;min-height:100dvh;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
+html{height:100vh;height:100dvh;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
 *,*::before,*::after{box-sizing:inherit}
 body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
@@ -60,7 +60,7 @@ body[data-dir="3"]{--bg:var(--bg-3);--ink:var(--ink-3);--soft:var(--soft-3);--li
 
 /* Every block has a fixed size, so nothing moves when the day changes */
 main{
-  height:100%; width:100%; max-width:480px; margin:0 auto; padding:16px 24px 12px;
+  height:100%; width:100%; max-width:480px; margin:0 auto; padding:16px 24px 0;
   display:grid; grid-template-rows:44px 1fr 112px 60px; text-align:center;
 }
 .gdate{position:relative; justify-self:center; align-self:center; height:36px; line-height:36px;
@@ -112,7 +112,8 @@ main{
 /* ---------- controls: iOS-like glass buttons ---------- */
 :root{--sys:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Instrument Sans", system-ui, sans-serif}
 body{--glass:color-mix(in srgb, var(--ink) 13%, transparent); --glass-on:color-mix(in srgb, var(--ink) 24%, transparent)}
-main{grid-template-rows:52px 1fr 104px 64px; grid-template-columns:minmax(0,1fr)}
+main{grid-template-rows:52px 1fr 104px 52px; grid-template-columns:minmax(0,1fr)}
+nav{align-items:end}
 .top{display:grid; grid-template-columns:minmax(0,1fr) 44px; column-gap:12px; align-items:center}
 .top .gdate{justify-self:start; max-width:100%; overflow:hidden; text-overflow:ellipsis; padding:0 8px 0 2px; margin-left:-2px}
 .gdate{font-family:var(--sys)}
