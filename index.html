@@ -17,8 +17,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Gloock&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>:root{
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:max(env(safe-area-inset-bottom,0px), 10px);
   color-scheme:light;
   /* direction palettes: oriente rojo, norte negro, poniente blanco, sur azul */
   --bg-0:#A3123A; --ink-0:#F6E9DA; --soft-0:rgba(246,233,218,.62); --line-0:rgba(246,233,218,.28);
@@ -44,11 +42,14 @@
   --bg-2:#4B4741; --ink-2:#F2EEE6; --soft-2:rgba(242,238,230,.6); --line-2:rgba(242,238,230,.22);
   --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
 }
-html{height:100vh;height:100dvh;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
 *,*::before,*::after{box-sizing:inherit}
 body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
-  margin:0; height:100%; background:var(--bg); color:var(--ink);
+  margin:0; background:var(--bg); color:var(--ink);
+  /* fixed to the real screen edges: iOS home-screen apps report a viewport shorter than the screen */
+  position:fixed; inset:0;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) max(env(safe-area-inset-bottom,0px), 10px) env(safe-area-inset-left,0px);
   font-family:var(--text); -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
   transition:background-color .5s ease, color .5s ease;
   overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-user-select:none;
@@ -60,7 +61,7 @@ body[data-dir="3"]{--bg:var(--bg-3);--ink:var(--ink-3);--soft:var(--soft-3);--li
 
 /* Every block has a fixed size, so nothing moves when the day changes */
 main{
-  height:100%; width:100%; max-width:480px; margin:0 auto; padding:16px 24px 0;
+  height:100%; width:100%; max-width:480px; margin:0 auto; padding:16px 24px 0; container-type:size;
   display:grid; grid-template-rows:44px 1fr 112px 60px; text-align:center;
 }
 .gdate{position:relative; justify-self:center; align-self:center; height:36px; line-height:36px;
@@ -69,8 +70,8 @@ main{
 .gdate:focus-within{outline:2px solid var(--ink)}
 
 .day{align-self:center; display:grid; justify-items:center; row-gap:16px;
-  --gw:max(130px, min(68vw, 300px, calc((100dvh - 430px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)) * .909)))}
-.day .txt{display:grid; justify-items:center; row-gap:6px; transition:opacity .2s ease}
+  --gw:max(120px, min(68cqw, 300px, calc((100cqh - 385px) * .909)))}
+.day .txt{display:grid; justify-items:center; justify-self:stretch; min-width:0; row-gap:6px; transition:opacity .2s ease}
 .day.out .txt{opacity:0}
 .cart{width:var(--gw); aspect-ratio:240/264; display:block; overflow:visible; filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .cart{filter:brightness(.9) drop-shadow(0 6px 14px rgba(0,0,0,.4))} }
@@ -254,6 +255,23 @@ nav .pill.hide{opacity:0; transform:scale(.8); pointer-events:none}
 .still [class*="a-"]{animation:none !important}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .cell{filter:brightness(.9)} }
 @media (max-height:700px){ .grid.v .cell svg{max-width:48px} .grid.v .cell .g{display:none} .grid.v .cell{grid-template-rows:auto 18px} }
+
+/* ---------- landscape phone: tile on the left, everything else on the right ---------- */
+@media (orientation: landscape) and (max-height: 560px){
+  main{max-width:none; padding:10px 28px 0; column-gap:36px;
+    grid-template-columns:auto minmax(0,1fr); grid-template-rows:48px minmax(0,1fr) auto 50px}
+  .top{grid-column:2; grid-row:1}
+  .day{display:contents}
+  .cart{grid-column:1; grid-row:1 / -1; align-self:center; justify-self:center;
+    width:auto; height:min(calc(100cqh - 20px), 44cqw); max-width:none}
+  .day .txt{grid-column:2; grid-row:2; align-self:center; justify-items:start; text-align:left}
+  .sign{--fs:clamp(30px, 14cqh, 58px)}
+  .reading{height:auto}
+  .month{grid-column:2; grid-row:3; padding-top:10px; row-gap:8px}
+  nav{grid-column:2; grid-row:4}
+  .sheet{max-width:640px}
+  .grid.v{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
 @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important} .cart .band{stroke-dashoffset:0} .cart .corner,.cart .dot{transform:none} .cart .fig{opacity:1} }
 </style>
 </head>
@@ -694,7 +712,7 @@ try { const saved = localStorage.getItem("tonalli-view"); if (saved === "v" || s
 /* ---------- day screen ---------- */
 function fitSign(){
   const el=$("sign"); el.style.fontSize="";
-  const max = el.parentElement.parentElement.clientWidth;
+  const max = el.parentElement.clientWidth;
   if (el.scrollWidth > max) el.style.fontSize = (parseFloat(getComputedStyle(el).fontSize) * max / el.scrollWidth * 0.98) + "px";
 }
 function render(){
