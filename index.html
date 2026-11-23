@@ -918,18 +918,25 @@ function fixViewport(){
   const missing = screenH - innerHeight;
   const fix = standalone && missing > 0 && missing <= 64 ? missing : 0;
   document.documentElement.style.setProperty("--vfix", fix + "px");
+  vfixInfo = `${innerHeight} of ${screenH}, ${standalone?"app":"browser"}`;
   return fix;
 }
+// iOS settles the viewport size late and doesn't always fire "resize" when it does,
+// so measure again at every moment it could have changed
+let vfixInfo = "";
+const refit = ()=>{ fixViewport(); fitSign(); };
 fixViewport();
-addEventListener("resize", ()=>{ fixViewport(); fitSign(); });
-addEventListener("orientationchange", ()=>setTimeout(()=>{ fixViewport(); fitSign(); }, 300));
+["resize","load","pageshow","orientationchange"].forEach(ev=>addEventListener(ev, ()=>{ refit(); setTimeout(refit, 350); }));
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ refit(); setTimeout(refit, 350); } });
+if (window.visualViewport) visualViewport.addEventListener("resize", refit);
+[50, 300, 1000, 2500].forEach(ms=>setTimeout(refit, ms));
 
 /* ---------- layout diagnostics: tap the sign name 3 times quickly to show/hide ---------- */
 (()=>{ let taps=[], box=null;
   const probe=document.createElement("div");
   probe.style.cssText="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
   document.body.appendChild(probe);
-  const fill=()=>{ if(!box) return; const cs=getComputedStyle(probe), r=id=>$(id).getBoundingClientRect();
+  const fill=()=>{ if(!box) return; fixViewport(); const cs=getComputedStyle(probe), r=id=>$(id).getBoundingClientRect();
     const rows=[["standalone", navigator.standalone===true || matchMedia("(display-mode: standalone)").matches],
       ["screen", screen.width+"x"+screen.height], ["innerHeight", innerHeight], ["visualViewport", window.visualViewport?Math.round(visualViewport.height):"-"],
       ["html.clientHeight", document.documentElement.clientHeight], ["body bottom", Math.round(document.body.getBoundingClientRect().bottom)],
@@ -937,7 +944,8 @@ addEventListener("orientationchange", ()=>setTimeout(()=>{ fixViewport(); fitSig
       ["arrow bottom", Math.round(r("next").bottom)], ["gap under arrow", Math.round(innerHeight - r("next").bottom)],
       ["viewport fix", getComputedStyle(document.documentElement).getPropertyValue("--vfix")],
       ["gap to real screen bottom", Math.round((navigator.standalone===true||matchMedia("(display-mode: standalone)").matches ? (innerHeight>innerWidth?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width)) : innerHeight) - r("next").bottom)],
-      ["version", "layout-4"]];
+      ["measured", vfixInfo],
+      ["version", "layout-5"]];
     box.innerHTML = rows.map(([k,v])=>"<div><b>"+k+"</b> "+v+"</div>").join(""); };
   $("sign").addEventListener("click", ()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<700); taps.push(now);
     if (taps.length<3) return; taps=[];
