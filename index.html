@@ -52,8 +52,8 @@ body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
   margin:0; background:var(--bg); color:var(--ink);
   /* fixed to the real screen edges: iOS home-screen apps report a viewport shorter than the screen */
-  position:fixed; inset:0; bottom:calc(-1 * var(--vfix, 0px));  /* bottom: sit in the lower part of the home-indicator zone, like iOS 26 floating bars, not above it */
-  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) max(calc(env(safe-area-inset-bottom,0px) - 16px), 12px) env(safe-area-inset-left,0px);
+  position:fixed; inset:0;   /* bottom: just inside the home-indicator zone, where iOS apps place their bottom controls */
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) max(calc(env(safe-area-inset-bottom,0px) - 6px), 16px) env(safe-area-inset-left,0px);
   font-family:var(--text); -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
   transition:background-color .5s ease, color .5s ease;
   overscroll-behavior:none; touch-action:pan-y; user-select:none; -webkit-user-select:none;
@@ -199,10 +199,10 @@ nav .pill.hide{opacity:0; transform:scale(.8); pointer-events:none}
 }
 
 /* ---------- iOS sheet with the calendar ---------- */
-.dim{position:fixed; inset:0; bottom:calc(-1 * var(--vfix, 0px)); z-index:5; background:rgba(0,0,0,.4); opacity:0; transition:opacity .35s ease}
+.dim{position:fixed; inset:0;  z-index:5; background:rgba(0,0,0,.4); opacity:0; transition:opacity .35s ease}
 .dim.open{opacity:1} .dim[hidden]{display:none}
 .sheet{
-  position:fixed; z-index:6; left:0; right:0; bottom:calc(-1 * var(--vfix, 0px)); margin:0 auto; max-width:520px;
+  position:fixed; z-index:6; left:0; right:0; bottom:0; margin:0 auto; max-width:520px;
   top:calc(env(safe-area-inset-top,0px) + 10px);
   background:var(--bg); color:var(--ink); border-radius:14px 14px 0 0; box-shadow:0 -4px 30px rgba(0,0,0,.25);
   padding:8px 16px 0;
@@ -920,56 +920,6 @@ document.addEventListener("visibilitychange",()=>{
 });
 addEventListener("resize", fitSign);
 
-/* ---------- iOS home-screen bug: the page is given a viewport shorter than the screen by the
-   status-bar height, while still being drawn from under the status bar. Measure the missing
-   strip and extend the fixed layers over it (only in the installed app, only if it's small). ---------- */
-function fixViewport(){
-  const standalone = navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
-  const portrait = innerHeight > innerWidth;
-  const screenH = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
-  const missing = screenH - innerHeight;
-  const fix = standalone && missing > 0 && missing <= 64 ? missing : 0;
-  // measured for the diagnostics only: extending the layers didn't help, iOS clips drawing at the viewport edge
-  document.documentElement.style.setProperty("--vfix", "0px");
-  vfixInfo = `${innerHeight} of ${screenH}, ${standalone?"app":"browser"}`;
-  return fix;
-}
-// iOS settles the viewport size late and doesn't always fire "resize" when it does,
-// so measure again at every moment it could have changed
-let vfixInfo = "";
-const refit = ()=>{ fixViewport(); fitSign(); };
-fixViewport();
-["resize","load","pageshow","orientationchange"].forEach(ev=>addEventListener(ev, ()=>{ refit(); setTimeout(refit, 350); }));
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ refit(); setTimeout(refit, 350); } });
-if (window.visualViewport) visualViewport.addEventListener("resize", refit);
-[50, 300, 1000, 2500].forEach(ms=>setTimeout(refit, ms));
-
-/* ---------- layout diagnostics: tap the sign name 3 times quickly to show/hide ---------- */
-(()=>{ let taps=[], box=null;
-  const probe=document.createElement("div");
-  probe.style.cssText="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
-  document.body.appendChild(probe);
-  const fill=()=>{ if(!box) return; fixViewport(); const cs=getComputedStyle(probe), r=id=>$(id).getBoundingClientRect();
-    const rows=[["standalone", navigator.standalone===true || matchMedia("(display-mode: standalone)").matches],
-      ["screen", screen.width+"x"+screen.height], ["innerHeight", innerHeight], ["visualViewport", window.visualViewport?Math.round(visualViewport.height):"-"],
-      ["html.clientHeight", document.documentElement.clientHeight], ["body bottom", Math.round(document.body.getBoundingClientRect().bottom)],
-      ["safe top/bottom", parseFloat(cs.paddingTop)+" / "+parseFloat(cs.paddingBottom)],
-      ["arrow bottom", Math.round(r("next").bottom)], ["gap under arrow", Math.round(innerHeight - r("next").bottom)],
-      ["html height", Math.round(document.documentElement.getBoundingClientRect().height)+(document.documentElement.classList.contains("standalone")?" (standalone)":"")],
-      ["viewport fix", getComputedStyle(document.documentElement).getPropertyValue("--vfix")],
-      ["gap to real screen bottom", Math.round((navigator.standalone===true||matchMedia("(display-mode: standalone)").matches ? (innerHeight>innerWidth?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width)) : innerHeight) - r("next").bottom)],
-      ["measured", vfixInfo],
-      ["theme-color", (document.querySelector('meta[name="theme-color"]')||{}).content],
-      ["version", "layout-8"]];
-    box.innerHTML = rows.map(([k,v])=>"<div><b>"+k+"</b> "+v+"</div>").join(""); };
-  $("sign").addEventListener("click", ()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<700); taps.push(now);
-    if (taps.length<3) return; taps=[];
-    if (box){ box.remove(); box=null; return; }
-    box=document.createElement("div");
-    box.style.cssText="position:fixed;z-index:50;left:12px;top:calc(env(safe-area-inset-top,0px) + 8px);padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.78);color:#fff;font:12px/1.5 ui-monospace,Menlo,monospace";
-    document.body.appendChild(box); fill(); });
-  addEventListener("resize", fill);
-})();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 document.fonts && document.fonts.ready.then(fitSign);
 render();
