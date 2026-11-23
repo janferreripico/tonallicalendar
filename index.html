@@ -48,8 +48,7 @@ body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
   margin:0; background:var(--bg); color:var(--ink);
   /* fixed to the real screen edges: iOS home-screen apps report a viewport shorter than the screen */
-  position:fixed; inset:0;
-  /* bottom: sit in the lower part of the home-indicator zone, like iOS 26 floating bars, not above it */
+  position:fixed; inset:0; bottom:calc(-1 * var(--vfix, 0px));  /* bottom: sit in the lower part of the home-indicator zone, like iOS 26 floating bars, not above it */
   padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) max(calc(env(safe-area-inset-bottom,0px) - 16px), 12px) env(safe-area-inset-left,0px);
   font-family:var(--text); -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
   transition:background-color .5s ease, color .5s ease;
@@ -196,10 +195,10 @@ nav .pill.hide{opacity:0; transform:scale(.8); pointer-events:none}
 }
 
 /* ---------- iOS sheet with the calendar ---------- */
-.dim{position:fixed; inset:0; z-index:5; background:rgba(0,0,0,.4); opacity:0; transition:opacity .35s ease}
+.dim{position:fixed; inset:0; bottom:calc(-1 * var(--vfix, 0px)); z-index:5; background:rgba(0,0,0,.4); opacity:0; transition:opacity .35s ease}
 .dim.open{opacity:1} .dim[hidden]{display:none}
 .sheet{
-  position:fixed; z-index:6; left:0; right:0; bottom:0; margin:0 auto; max-width:520px;
+  position:fixed; z-index:6; left:0; right:0; bottom:calc(-1 * var(--vfix, 0px)); margin:0 auto; max-width:520px;
   top:calc(env(safe-area-inset-top,0px) + 10px);
   background:var(--bg); color:var(--ink); border-radius:14px 14px 0 0; box-shadow:0 -4px 30px rgba(0,0,0,.25);
   padding:8px 16px 0;
@@ -909,6 +908,22 @@ document.addEventListener("visibilitychange",()=>{
 });
 addEventListener("resize", fitSign);
 
+/* ---------- iOS home-screen bug: the page is given a viewport shorter than the screen by the
+   status-bar height, while still being drawn from under the status bar. Measure the missing
+   strip and extend the fixed layers over it (only in the installed app, only if it's small). ---------- */
+function fixViewport(){
+  const standalone = navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
+  const portrait = innerHeight > innerWidth;
+  const screenH = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
+  const missing = screenH - innerHeight;
+  const fix = standalone && missing > 0 && missing <= 64 ? missing : 0;
+  document.documentElement.style.setProperty("--vfix", fix + "px");
+  return fix;
+}
+fixViewport();
+addEventListener("resize", ()=>{ fixViewport(); fitSign(); });
+addEventListener("orientationchange", ()=>setTimeout(()=>{ fixViewport(); fitSign(); }, 300));
+
 /* ---------- layout diagnostics: tap the sign name 3 times quickly to show/hide ---------- */
 (()=>{ let taps=[], box=null;
   const probe=document.createElement("div");
@@ -920,7 +935,9 @@ addEventListener("resize", fitSign);
       ["html.clientHeight", document.documentElement.clientHeight], ["body bottom", Math.round(document.body.getBoundingClientRect().bottom)],
       ["safe top/bottom", parseFloat(cs.paddingTop)+" / "+parseFloat(cs.paddingBottom)],
       ["arrow bottom", Math.round(r("next").bottom)], ["gap under arrow", Math.round(innerHeight - r("next").bottom)],
-      ["version", "layout-3"]];
+      ["viewport fix", getComputedStyle(document.documentElement).getPropertyValue("--vfix")],
+      ["gap to real screen bottom", Math.round((navigator.standalone===true||matchMedia("(display-mode: standalone)").matches ? (innerHeight>innerWidth?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width)) : innerHeight) - r("next").bottom)],
+      ["version", "layout-4"]];
     box.innerHTML = rows.map(([k,v])=>"<div><b>"+k+"</b> "+v+"</div>").join(""); };
   $("sign").addEventListener("click", ()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<700); taps.push(now);
     if (taps.length<3) return; taps=[];
