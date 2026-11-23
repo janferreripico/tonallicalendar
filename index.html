@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tonalli">
 <meta name="theme-color" content="#A3123A">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -43,6 +43,10 @@
   --bg-3:#16485A; --ink-3:#E7EFEE; --soft-3:rgba(231,239,238,.6); --line-3:rgba(231,239,238,.22);
 }
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg-0);transition:background-color .5s ease}
+/* iOS 26 (WebKit bug 301108): an installed app whose document is shorter than the screen gets a
+   viewport short by the status bar. Making the document screen-tall makes iOS give the full height;
+   min() keeps it from scrolling wherever the viewport is already full or the inset is 0. */
+html.standalone{min-height:min(100lvh, calc(100% + env(safe-area-inset-top,0px)))}
 *,*::before,*::after{box-sizing:inherit}
 body{
   --bg:var(--bg-0); --ink:var(--ink-0); --soft:var(--soft-0); --line:var(--line-0);
@@ -689,6 +693,8 @@ function cartouche(r){
   ${dots}`;
 }
 
+// mark the installed app as early as possible (display-mode is unreliable on iOS, navigator.standalone isn't)
+if (navigator.standalone===true || matchMedia("(display-mode: standalone)").matches) document.documentElement.classList.add("standalone");
 const $ = id => document.getElementById(id);
 const noon = d => { const x = new Date(d); x.setHours(12,0,0,0); return x; };
 const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return noon(x); };
@@ -721,7 +727,13 @@ function render(){
   // paint the whole screen, including behind the status bar and home indicator, in the day's colour
   const bg = getComputedStyle(document.documentElement).getPropertyValue(themeVars[r.dir]).trim();
   document.documentElement.style.backgroundColor = bg;
-  document.querySelector('meta[name="theme-color"]').content = bg;
+  // iOS tints the status-bar strip from theme-color and seems to ignore edits to the existing tag,
+  // so put a fresh tag in its place on every day change
+  const oldMeta = document.querySelector('meta[name="theme-color"]');
+  if (!oldMeta || oldMeta.content !== bg){
+    const meta = document.createElement("meta"); meta.name = "theme-color"; meta.content = bg;
+    if (oldMeta) oldMeta.replaceWith(meta); else document.head.appendChild(meta);
+  }
   $("gdate").textContent = cap(fmt.format(cur));
   $("picker").value = iso(cur);
   $("cart").innerHTML = cartouche(r);
@@ -943,10 +955,12 @@ if (window.visualViewport) visualViewport.addEventListener("resize", refit);
       ["html.clientHeight", document.documentElement.clientHeight], ["body bottom", Math.round(document.body.getBoundingClientRect().bottom)],
       ["safe top/bottom", parseFloat(cs.paddingTop)+" / "+parseFloat(cs.paddingBottom)],
       ["arrow bottom", Math.round(r("next").bottom)], ["gap under arrow", Math.round(innerHeight - r("next").bottom)],
+      ["html height", Math.round(document.documentElement.getBoundingClientRect().height)+(document.documentElement.classList.contains("standalone")?" (standalone)":"")],
       ["viewport fix", getComputedStyle(document.documentElement).getPropertyValue("--vfix")],
       ["gap to real screen bottom", Math.round((navigator.standalone===true||matchMedia("(display-mode: standalone)").matches ? (innerHeight>innerWidth?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width)) : innerHeight) - r("next").bottom)],
       ["measured", vfixInfo],
-      ["version", "layout-6"]];
+      ["theme-color", (document.querySelector('meta[name="theme-color"]')||{}).content],
+      ["version", "layout-8"]];
     box.innerHTML = rows.map(([k,v])=>"<div><b>"+k+"</b> "+v+"</div>").join(""); };
   $("sign").addEventListener("click", ()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<700); taps.push(now);
     if (taps.length<3) return; taps=[];
