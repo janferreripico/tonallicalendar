@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Tonalli">
 <meta name="theme-color" content="#A3123A">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -917,7 +917,8 @@ function fixViewport(){
   const screenH = portrait ? Math.max(screen.height, screen.width) : Math.min(screen.height, screen.width);
   const missing = screenH - innerHeight;
   const fix = standalone && missing > 0 && missing <= 64 ? missing : 0;
-  document.documentElement.style.setProperty("--vfix", fix + "px");
+  // measured for the diagnostics only: extending the layers didn't help, iOS clips drawing at the viewport edge
+  document.documentElement.style.setProperty("--vfix", "0px");
   vfixInfo = `${innerHeight} of ${screenH}, ${standalone?"app":"browser"}`;
   return fix;
 }
@@ -945,7 +946,7 @@ if (window.visualViewport) visualViewport.addEventListener("resize", refit);
       ["viewport fix", getComputedStyle(document.documentElement).getPropertyValue("--vfix")],
       ["gap to real screen bottom", Math.round((navigator.standalone===true||matchMedia("(display-mode: standalone)").matches ? (innerHeight>innerWidth?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width)) : innerHeight) - r("next").bottom)],
       ["measured", vfixInfo],
-      ["version", "layout-5"]];
+      ["version", "layout-6"]];
     box.innerHTML = rows.map(([k,v])=>"<div><b>"+k+"</b> "+v+"</div>").join(""); };
   $("sign").addEventListener("click", ()=>{ const now=Date.now(); taps=taps.filter(t=>now-t<700); taps.push(now);
     if (taps.length<3) return; taps=[];
